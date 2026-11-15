@@ -31,6 +31,7 @@ export default function AdminPage() {
     products,
     scents,
     config,
+    orders,
     isAdminLoggedIn,
     loginAdmin,
     logoutAdmin,
@@ -42,6 +43,8 @@ export default function AdminPage() {
     resetToDefaults,
     exportCatalogData,
     importCatalogData,
+    updateOrderStatus,
+    clearOrdersHistory,
   } = useCatalog();
 
   // Login form state
@@ -50,7 +53,7 @@ export default function AdminPage() {
   const [loginError, setLoginError] = useState("");
 
   // Tab navigation
-  const [activeTab, setActiveTab] = useState<"products" | "scents" | "settings" | "backup">("products");
+  const [activeTab, setActiveTab] = useState<"products" | "scents" | "settings" | "backup" | "orders">("products");
 
   // Editing Product state
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -342,6 +345,21 @@ export default function AdminPage() {
           </button>
 
           <button
+            onClick={() => setActiveTab("orders")}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+              activeTab === "orders"
+                ? "bg-[#332219] text-white shadow-xs"
+                : "bg-white text-[#6E5D53] border border-[#E8DCCF] hover:bg-[#FAF7F2]"
+            }`}
+          >
+            <MessageCircle className="w-4 h-4 text-[#25D366]" />
+            <span>Pedidos ({orders.length})</span>
+            {orders.length > 0 && (
+              <span className="w-2 h-2 rounded-full bg-[#B87333] animate-pulse" />
+            )}
+          </button>
+
+          <button
             onClick={() => setActiveTab("scents")}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
               activeTab === "scents"
@@ -474,6 +492,132 @@ export default function AdminPage() {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* TAB: ORDERS */}
+        {activeTab === "orders" && (
+          <div>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div>
+                <h2 className="font-serif text-2xl font-semibold text-[#332219]">
+                  Histórico de Pedidos Recebidos
+                </h2>
+                <p className="text-xs text-[#6E5D53]">
+                  Acompanhe os pedidos gerados pelos clientes pelo catálogo digital.
+                </p>
+              </div>
+
+              {orders.length > 0 && (
+                <button
+                  onClick={() => {
+                    if (window.confirm("Deseja limpar o histórico de pedidos deste navegador?")) {
+                      clearOrdersHistory();
+                      showNotice("Histórico limpo!");
+                    }
+                  }}
+                  className="text-xs text-red-600 hover:text-red-700 px-4 py-2 rounded-xl border border-red-200 hover:bg-red-50 transition-colors cursor-pointer"
+                >
+                  Limpar Histórico
+                </button>
+              )}
+            </div>
+
+            {orders.length === 0 ? (
+              <div className="bg-white rounded-3xl p-12 text-center border border-[#E8DCCF]">
+                <MessageCircle className="w-10 h-10 text-[#B87333] mx-auto mb-3 opacity-60" />
+                <h3 className="font-serif text-lg font-semibold text-[#332219] mb-1">
+                  Nenhum pedido registrado ainda
+                </h3>
+                <p className="text-xs text-[#6E5D53] max-w-sm mx-auto">
+                  Quando um cliente concluir uma seleção e avançar para o WhatsApp, o pedido aparecerá aqui automaticamente.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {orders.map((ord, idx) => (
+                  <div
+                    key={ord.id || idx}
+                    className="bg-white rounded-2xl border border-[#E8DCCF] p-5 shadow-2xs space-y-3"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[#F4ECE1]">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-serif text-lg font-bold text-[#332219]">
+                            {ord.customerName}
+                          </span>
+                          {ord.isGift && (
+                            <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-pink-100 text-pink-700">
+                              🎁 Para Presente
+                            </span>
+                          )}
+                        </div>
+                        {ord.customerPhone && (
+                          <a
+                            href={`https://wa.me/${ord.customerPhone.replace(/\D/g, "")}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-[#25D366] hover:underline inline-flex items-center gap-1 mt-0.5"
+                          >
+                            <MessageCircle className="w-3 h-3" />
+                            <span>{ord.customerPhone}</span>
+                          </a>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={ord.status || "pendente"}
+                          onChange={(e) =>
+                            ord.id && updateOrderStatus(ord.id, e.target.value as any)
+                          }
+                          className="text-xs font-semibold px-3 py-1.5 rounded-full border border-[#E8DCCF] bg-[#FAF7F2] text-[#332219] outline-hidden cursor-pointer"
+                        >
+                          <option value="pendente">⏳ Pendente</option>
+                          <option value="confirmado">✓ Confirmado</option>
+                          <option value="entregue">✨ Entregue</option>
+                        </select>
+                        <span className="text-base font-bold text-[#B87333] whitespace-nowrap ml-2">
+                          {ord.total.toLocaleString("pt-BR", {
+                            style: "currency",
+                            currency: "BRL",
+                          })}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Items */}
+                    <div className="space-y-1.5 text-xs text-[#6E5D53]">
+                      {ord.items.map((item, i) => (
+                        <div key={i} className="flex items-center justify-between">
+                          <span>
+                            • {item.quantity}x <strong>{item.product.name}</strong> ({item.scent.name})
+                          </span>
+                          <span>
+                            {item.totalPrice.toLocaleString("pt-BR", {
+                              style: "currency",
+                              currency: "BRL",
+                            })}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {ord.giftMessage && (
+                      <div className="p-3 bg-pink-50/60 rounded-xl border border-pink-200/70 text-xs text-pink-900">
+                        <strong>Dedicatória do Cartão:</strong> &ldquo;{ord.giftMessage}&rdquo;
+                      </div>
+                    )}
+
+                    {ord.notes && (
+                      <div className="text-[11px] text-[#9C8A7E] italic">
+                        Obs: {ord.notes}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { Product, Scent, CartItem, StoreConfig, PaymentMethod, OrderData } from "@/types";
+import { Product, Scent, CartItem, StoreConfig, PaymentMethod, OrderData, OrderStatus } from "@/types";
 import { INITIAL_PRODUCTS, INITIAL_SCENTS, INITIAL_CONFIG, ADMIN_CREDENTIALS } from "@/lib/constants";
 
 interface CatalogContextType {
@@ -15,6 +15,7 @@ interface CatalogContextType {
   selectedProductForModal: Product | null;
   isCheckoutOpen: boolean;
   isAdminLoggedIn: boolean;
+  orders: OrderData[];
   lastCompletedOrder: OrderData | null;
   isSuccessModalOpen: boolean;
 
@@ -38,9 +39,13 @@ interface CatalogContextType {
     customerPhone?: string;
     paymentMethod: PaymentMethod;
     notes?: string;
+    isGift?: boolean;
+    giftMessage?: string;
   }) => void;
   generateWhatsAppLink: (orderData: OrderData) => string;
   getWhatsAppSupportLink: () => string;
+  updateOrderStatus: (orderId: string, status: OrderStatus) => void;
+  clearOrdersHistory: () => void;
 
   // Admin actions
   loginAdmin: (user: string, pass: string) => boolean;
@@ -63,6 +68,7 @@ const STORAGE_KEYS = {
   CONFIG: "selumi_config_v1",
   CART: "selumi_cart_v1",
   ADMIN_AUTH: "selumi_admin_auth_v1",
+  ORDERS: "selumi_orders_history_v1",
 };
 
 export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -70,6 +76,7 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [scents, setScents] = useState<Scent[]>(INITIAL_SCENTS);
   const [config, setConfig] = useState<StoreConfig>(INITIAL_CONFIG);
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [orders, setOrders] = useState<OrderData[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -100,6 +107,11 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const savedCart = localStorage.getItem(STORAGE_KEYS.CART);
       if (savedCart) {
         setCart(JSON.parse(savedCart));
+      }
+
+      const savedOrders = localStorage.getItem(STORAGE_KEYS.ORDERS);
+      if (savedOrders) {
+        setOrders(JSON.parse(savedOrders));
       }
 
       const savedAdminAuth = sessionStorage.getItem(STORAGE_KEYS.ADMIN_AUTH);
@@ -273,6 +285,13 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
       msg += `📝 *Observações / Detalhes:* ${orderData.notes.trim()}\n`;
     }
 
+    if (orderData.isGift) {
+      msg += `🎁 *Embalagem para Presente:* Sim\n`;
+      if (orderData.giftMessage && orderData.giftMessage.trim()) {
+        msg += `💌 *Dedicatória:* "${orderData.giftMessage.trim()}"\n`;
+      }
+    }
+
     msg += `━━━━━━━━━━━━━━━━━━━━━\n`;
     msg += `Olá, acabei de montar meu pedido pelo catálogo digital da Selumi! Gostaria de confirmar a disponibilidade e combinar os detalhes da entrega/retirada. ✨`;
 
@@ -298,13 +317,27 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
     customerPhone?: string;
     paymentMethod: PaymentMethod;
     notes?: string;
+    isGift?: boolean;
+    giftMessage?: string;
   }) => {
     const orderData: OrderData = {
       ...orderInput,
+      id: `order-${Date.now()}`,
+      status: "pendente",
       items: [...cart],
       total: cartTotal,
       createdAt: new Date().toISOString(),
     };
+
+    setOrders((prev) => [orderData, ...prev]);
+    try {
+      localStorage.setItem(
+        STORAGE_KEYS.ORDERS,
+        JSON.stringify([orderData, ...orders])
+      );
+    } catch (e) {
+      console.error(e);
+    }
 
     setLastCompletedOrder(orderData);
     setIsCheckoutOpen(false);
@@ -316,6 +349,23 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     // Clear cart after order is triggered
     clearCart();
+  };
+
+  const updateOrderStatus = (orderId: string, status: OrderStatus) => {
+    setOrders((prev) => {
+      const updated = prev.map((ord) => (ord.id === orderId ? { ...ord, status } : ord));
+      try {
+        localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(updated));
+      } catch (e) {
+        console.error(e);
+      }
+      return updated;
+    });
+  };
+
+  const clearOrdersHistory = () => {
+    setOrders([]);
+    localStorage.removeItem(STORAGE_KEYS.ORDERS);
   };
 
   // Admin Actions
@@ -414,6 +464,7 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
         selectedProductForModal,
         isCheckoutOpen,
         isAdminLoggedIn,
+        orders,
         lastCompletedOrder,
         isSuccessModalOpen,
 
@@ -432,6 +483,8 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
         submitOrder,
         generateWhatsAppLink,
         getWhatsAppSupportLink,
+        updateOrderStatus,
+        clearOrdersHistory,
 
         loginAdmin,
         logoutAdmin,

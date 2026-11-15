@@ -12,6 +12,8 @@ export const CheckoutModal: React.FC = () => {
   const [customerPhone, setCustomerPhone] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("pix");
   const [notes, setNotes] = useState("");
+  const [isGift, setIsGift] = useState(false);
+  const [giftMessage, setGiftMessage] = useState("");
   const [validationError, setValidationError] = useState("");
 
   if (!isCheckoutOpen) return null;
@@ -29,6 +31,8 @@ export const CheckoutModal: React.FC = () => {
       customerPhone: customerPhone.trim(),
       paymentMethod,
       notes: notes.trim(),
+      isGift,
+      giftMessage: giftMessage.trim(),
     });
   };
 
@@ -185,11 +189,41 @@ export const CheckoutModal: React.FC = () => {
             </label>
             <textarea
               rows={2}
-              placeholder="Ex: É para presente com cartãozinho; ou endereço para cálculo de entrega..."
+              placeholder="Ex: Endereço para cálculo de entrega ou horário preferencial..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               className="w-full px-4 py-2.5 rounded-xl border border-[#E8DCCF] focus:border-[#B87333] focus:ring-1 focus:ring-[#B87333] outline-hidden text-sm bg-[#FAF7F2]/50 text-[#332219]"
             />
+          </div>
+
+          {/* Gift option */}
+          <div className="p-4 bg-[#F4ECE1]/50 rounded-2xl border border-[#E8DCCF]">
+            <label className="flex items-center gap-2.5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isGift}
+                onChange={(e) => setIsGift(e.target.checked)}
+                className="w-4 h-4 rounded text-[#B87333] focus:ring-[#B87333]"
+              />
+              <span className="text-xs font-bold text-[#332219]">
+                🎁 É para presente? (Embalagem com laço e cartão de afeto)
+              </span>
+            </label>
+
+            {isGift && (
+              <div className="mt-3 animate-fade-in">
+                <label className="block text-[11px] font-semibold text-[#6E5D53] mb-1">
+                  Escreva a dedicatória do cartão (opcional):
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="Ex: Com muito carinho para iluminar seus dias especiais... De: Ana, Para: Bia"
+                  value={giftMessage}
+                  onChange={(e) => setGiftMessage(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-[#E8DCCF] focus:border-[#B87333] outline-hidden text-xs bg-white text-[#332219]"
+                />
+              </div>
+            )}
           </div>
 
           {/* Order Summary box */}
