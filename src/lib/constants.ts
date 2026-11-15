@@ -13,7 +13,7 @@ export const INITIAL_PRODUCTS: Product[] = [
       "Trabalho artesanal com detalhes em alto relevo",
       "Aproximadamente 180g"
     ],
-    imageUrl: "https://images.unsplash.com/photo-1603006905003-be475563bc59?auto=format&fit=crop&w=900&q=80",
+    imageUrl: "/products/jardim.jpg",
     category: "Coleção Escultural",
     available: true,
     featured: true,
@@ -30,7 +30,7 @@ export const INITIAL_PRODUCTS: Product[] = [
       "Perfeita para presentear e decorar",
       "Aproximadamente 160g"
     ],
-    imageUrl: "https://images.unsplash.com/photo-1596433809252-260c2745dfdd?auto=format&fit=crop&w=900&q=80",
+    imageUrl: "/products/rosa.jpg",
     category: "Coleção Floral",
     available: true,
     featured: true,
@@ -47,7 +47,7 @@ export const INITIAL_PRODUCTS: Product[] = [
       "Queima uniforme e harmoniosa",
       "Aproximadamente 170g"
     ],
-    imageUrl: "https://images.unsplash.com/photo-1572726729437-3732efc1ec0a?auto=format&fit=crop&w=900&q=80",
+    imageUrl: "/products/flor.jpg",
     category: "Coleção Floral",
     available: true,
     featured: false,
@@ -64,7 +64,7 @@ export const INITIAL_PRODUCTS: Product[] = [
       "Duração de queima: aprox. 20 a 25 horas",
       "Peso líquido: 100g"
     ],
-    imageUrl: "https://images.unsplash.com/photo-1508746829417-e6f548d8d6ed?auto=format&fit=crop&w=900&q=80",
+    imageUrl: "/products/pequeno.jpg",
     category: "Linha Potes de Vidro",
     available: true,
     featured: false,
@@ -81,7 +81,7 @@ export const INITIAL_PRODUCTS: Product[] = [
       "Duração de queima: aprox. 35 a 45 horas",
       "Peso líquido: 180g"
     ],
-    imageUrl: "https://images.unsplash.com/photo-1543257580-7269da773bf5?auto=format&fit=crop&w=900&q=80",
+    imageUrl: "/products/grande.jpg",
     category: "Linha Potes de Vidro",
     available: true,
     featured: true,
