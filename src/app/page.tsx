@@ -7,6 +7,8 @@ import { ProductCard } from "@/components/ProductCard";
 import { ValuesSection } from "@/components/ValuesSection";
 import { ScentsSection } from "@/components/ScentsSection";
 import { HowToOrderSection } from "@/components/HowToOrderSection";
+import { RitualSection } from "@/components/RitualSection";
+import { FaqSection } from "@/components/FaqSection";
 import { Footer } from "@/components/Footer";
 import { ProductModal } from "@/components/ProductModal";
 import { CartDrawer } from "@/components/CartDrawer";
@@ -95,6 +97,12 @@ export default function HomePage() {
 
         {/* How to Order Guide */}
         <HowToOrderSection />
+
+        {/* Candle Care Ritual */}
+        <RitualSection />
+
+        {/* FAQ Section */}
+        <FaqSection />
       </main>
 
       {/* Global Modals & Drawers */}
