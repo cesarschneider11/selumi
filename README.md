@@ -1,36 +1,102 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🕯️ SELUMI — Luz que acolhe
 
-## Getting Started
+> **Catálogo Digital Premium de Velas Artesanais e Aromáticas**  
+> Desenvolvido com **Next.js**, **React**, **Tailwind CSS** e **TypeScript**, otimizado para celulares e pronto para deploy na **Vercel** e versionamento no **GitHub**.
 
-First, run the development server:
+---
+
+## ✨ Identidade e Conceito
+
+O projeto da **Selumi** foi concebido como uma **boutique digital refinada**, inspirada na tranquilidade, afeto, aconchego e bem-estar:
+- **Paleta de cores:** Bege suave, linho, creme, caramelo e marrom espresso acolhedor.
+- **Tipografia:** Serifada poética (*Cormorant Garamond*) e sem serifa moderna (*Plus Jakarta Sans*).
+- **Sensação:** Encantamento, suavidade e zero atrito de compra.
+- **Canal de fechamento:** WhatsApp oficial da marca, com pedido estruturado e atendimento humano.
+
+---
+
+## 📦 Produtos Iniciais do Catálogo
+
+1. **Jardim** — R$ 50,00  
+   *Vela botânica esculpida em cera vegetal com relevos delicados.*
+2. **Rosa** — R$ 50,00  
+   *Escultura de rosa em cera pura, pétalas aveludadas e toque romântico.*
+3. **Flor** — R$ 50,00  
+   *Vela floral contemporânea que dissipa as tensões da rotina.*
+4. **Vidro pequeno** — R$ 25,00  
+   *Pote de vidro com tampa protetora para rituais de autocuidado (100g).*
+5. **Vidro grande** — R$ 35,00  
+   *Recipiente generoso para queima prolongada e difusão em todo o lar (180g).*
+
+---
+
+## 🌸 Aromas & Essências Configuradas
+
+- **Baunilha Real & Fava Tonka** (Doce, acolhedora e reconfortante)
+- **Lavanda Francesa & Camomila** (Calmante, serena e relaxante)
+- **Flor de Cerejeira & Pêssego** (Floral luminosa, delicada e sofisticada)
+- **Capim Limão & Alecrim** (Revigorante, fresca e herbal)
+- **Canela & Especiarias Quentes** (Aconchegante, marcante e calorosa)
+- **Madeira Nobre & Âmbar** (Sofisticada, terrosa e intimista)
+
+---
+
+## 🛠️ Funcionalidades Principais
+
+1. **Página Inicial de Encantamento:** Apresentação da marca, destaques dos 4 pilares artesanais (100% Cera Vegetal, Alta Perfumaria, Feito à Mão, Presente Especial).
+2. **Catálogo Interativo:** Filtro por coleções, fotografias de destaque, preços nítidos e indicação de estoque.
+3. **Personalização Completa:** Ao escolher qualquer vela, o cliente escolhe a **essência desejada** e a **quantidade**, visualizando notas olfativas e valores em tempo real.
+4. **Sacola de Afeto (Carrinho):** Persistente via `localStorage` (os itens permanecem salvos mesmo se o cliente recarregar a página).
+5. **Finalização Rápida sem Login:** O cliente informa apenas seu nome, telefone opcional, observações/endereço e a forma de pagamento:
+   - **PIX**
+   - **Dinheiro** (na entrega ou retirada presencial)
+   - **Cartão / Mercado Pago** (deixado preparado como funcionalidade futura)
+6. **Integração WhatsApp:** Gera automaticamente a mensagem estruturada com formatação profissional e abre a conversa oficial da Selumi.
+7. **Botão Fale Conosco:** Botão flutuante discreto e acessível para dúvidas e pedidos especiais sob medida.
+8. **Área Administrativa Protegida (`/admin`):**
+   - Login com credenciais seguras.
+   - **Gerenciar Velas:** Criar, editar nomes, descrições, valores, disponibilidade (estoque) e fotos (via link ou upload de imagem do computador/celular).
+   - **Gerenciar Essências:** Adicionar novas fragrâncias, notas olfativas e ativar/desativar.
+   - **Configurações Gerais:** Número do WhatsApp da Selumi, chave PIX, mensagens da loja.
+   - **Backup & Restauração:** Exportar/importar catálogo em JSON ou restaurar os dados de fábrica a qualquer momento.
+
+---
+
+## 🔐 Acesso ao Painel Administrativo
+
+- **Rota:** `/admin`
+- **Usuário:** `selumi`
+- **Senha:** `111026`
+
+---
+
+## 🚀 Como Executar Localmente
 
 ```bash
+# 1. Instalar dependências (caso necessário)
+npm install
+
+# 2. Iniciar servidor de desenvolvimento
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+
+# 3. Acesse no navegador
+http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## ☁️ Como Publicar na Vercel e GitHub
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. **Crie um repositório no seu GitHub** (ex: `selumi-catalogo`).
+2. **Envie o código:**
+   ```bash
+   git add .
+   git commit -m "feat: Catalogo digital completo Selumi"
+   git branch -M main
+   git remote add origin https://github.com/SEU-USUARIO/selumi-catalogo.git
+   git push -u origin main
+   ```
+3. **Importe o repositório na [Vercel](https://vercel.com):**
+   - A Vercel detectará automaticamente o **Next.js**.
+   - Clique em **Deploy**.
+   - Seu catálogo estará no ar com HTTPS gratuito e velocidade ultra rápida!
