@@ -386,17 +386,32 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const saveProduct = (product: Product) => {
     setProducts((prev) => {
       const idx = prev.findIndex((p) => p.id === product.id);
+      let updated: Product[];
       if (idx > -1) {
-        const updated = [...prev];
+        updated = [...prev];
         updated[idx] = product;
-        return updated;
+      } else {
+        updated = [product, ...prev];
       }
-      return [product, ...prev];
+      try {
+        localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(updated));
+      } catch (e) {
+        console.error("Erro ao salvar produto no localStorage:", e);
+      }
+      return updated;
     });
   };
 
   const deleteProduct = (productId: string) => {
-    setProducts((prev) => prev.filter((p) => p.id !== productId));
+    setProducts((prev) => {
+      const updated = prev.filter((p) => p.id !== productId);
+      try {
+        localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(updated));
+      } catch (e) {
+        console.error("Erro ao salvar produtos:", e);
+      }
+      return updated;
+    });
   };
 
   const saveScent = (scent: Scent) => {

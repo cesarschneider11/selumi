@@ -205,7 +205,7 @@ export const ProductModal: React.FC = () => {
           </div>
 
           {/* Add to Cart Button */}
-          <div className="pt-2">
+          <div className="pt-2 space-y-2">
             <button
               onClick={handleAddToCart}
               disabled={!product.available || !selectedScent}
@@ -223,6 +223,18 @@ export const ProductModal: React.FC = () => {
                 {totalPrice.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
               </span>
             </button>
+
+            {/* Share product button */}
+            <a
+              href={`https://wa.me/?text=${encodeURIComponent(
+                `🕯️ Olha que linda essa vela da Selumi: *${product.name}* (${product.price.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}) — ${product.subtitle || "Vela artesanal em cera vegetal"}. Dá uma olhada no catálogo digital: ${typeof window !== "undefined" ? window.location.origin : ""}`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full py-2.5 px-4 rounded-xl text-xs text-[#6E5D53] hover:text-[#332219] hover:bg-[#F4ECE1] flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <span>Encaminhar esta vela para alguém especial ✨</span>
+            </a>
           </div>
         </div>
       </div>

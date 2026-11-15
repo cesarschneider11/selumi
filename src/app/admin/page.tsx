@@ -22,9 +22,13 @@ import {
   AlertTriangle,
   Eye,
   MessageCircle,
+  Globe,
+  Image as ImageIcon,
+  Loader2,
 } from "lucide-react";
 import { useCatalog } from "@/context/CatalogContext";
 import { Product, Scent, StoreConfig } from "@/types";
+import { compressImageFile } from "@/lib/image-compressor";
 
 export default function AdminPage() {
   const {
@@ -58,6 +62,9 @@ export default function AdminPage() {
   // Editing Product state
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [imageInputMode, setImageInputMode] = useState<"upload" | "url">("upload");
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [uploadFeedback, setUploadFeedback] = useState<string | null>(null);
 
   // Editing Scent state
   const [editingScent, setEditingScent] = useState<Scent | null>(null);
@@ -193,17 +200,23 @@ export default function AdminPage() {
     showNotice(`Vela "${editingProduct.name}" salva com sucesso!`);
   };
 
-  // Convert image file upload to base64 data url
-  const handleImageFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Convert and compress image file upload to high-efficiency base64
+  const handleImageFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && editingProduct) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        if (typeof reader.result === "string") {
-          setEditingProduct({ ...editingProduct, imageUrl: reader.result });
-        }
-      };
-      reader.readAsDataURL(file);
+    if (!file || !editingProduct) return;
+    try {
+      setIsUploadingImage(true);
+      setUploadFeedback("Otimizando e preparando imagem...");
+      const compressedDataUrl = await compressImageFile(file, 1000, 1000, 0.82);
+      setEditingProduct((prev) => (prev ? { ...prev, imageUrl: compressedDataUrl } : prev));
+      setUploadFeedback("✓ Fotografia carregada e otimizada!");
+      setTimeout(() => setUploadFeedback(null), 3000);
+    } catch (err) {
+      console.error("Erro ao comprimir imagem:", err);
+      alert("Não foi possível carregar esta foto. Tente outro formato.");
+      setUploadFeedback(null);
+    } finally {
+      setIsUploadingImage(false);
     }
   };
 
@@ -953,40 +966,119 @@ export default function AdminPage() {
                 />
               </div>
 
-              {/* Photo Input (URL or Upload) */}
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-[#332219] mb-1">
-                  Fotografia da Vela
-                </label>
-                <div className="flex gap-2 mb-2">
-                  <input
-                    type="text"
-                    value={editingProduct.imageUrl}
-                    onChange={(e) =>
-                      setEditingProduct({ ...editingProduct, imageUrl: e.target.value })
-                    }
-                    placeholder="Cole a URL da imagem ou envie abaixo"
-                    className="flex-1 px-4 py-2 rounded-xl border border-[#E8DCCF] text-xs bg-[#FAF7F2]/40 focus:border-[#B87333] outline-hidden"
-                  />
-                  <label className="bg-[#FAF7F2] hover:bg-[#F4ECE1] text-[#332219] border border-[#E8DCCF] px-3 py-2 rounded-xl text-xs font-medium flex items-center gap-1 cursor-pointer whitespace-nowrap">
-                    <Upload className="w-3.5 h-3.5" />
-                    <span>Upload Foto</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageFileUpload}
-                      className="hidden"
-                    />
+              {/* Photo Input (Tabs: File Upload vs URL) */}
+              <div className="p-4 bg-[#FAF7F2] rounded-2xl border border-[#E8DCCF] space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-[#332219]">
+                    Fotografia da Vela
                   </label>
+
+                  {/* Mode switcher tabs */}
+                  <div className="flex bg-white p-0.5 rounded-xl border border-[#E8DCCF]">
+                    <button
+                      type="button"
+                      onClick={() => setImageInputMode("upload")}
+                      className={`px-3 py-1 text-[11px] font-semibold rounded-lg flex items-center gap-1.5 transition-all cursor-pointer ${
+                        imageInputMode === "upload"
+                          ? "bg-[#332219] text-white shadow-xs"
+                          : "text-[#6E5D53] hover:text-[#332219]"
+                      }`}
+                    >
+                      <Upload className="w-3 h-3" />
+                      <span>Upload de Arquivo</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setImageInputMode("url")}
+                      className={`px-3 py-1 text-[11px] font-semibold rounded-lg flex items-center gap-1.5 transition-all cursor-pointer ${
+                        imageInputMode === "url"
+                          ? "bg-[#332219] text-white shadow-xs"
+                          : "text-[#6E5D53] hover:text-[#332219]"
+                      }`}
+                    >
+                      <Globe className="w-3 h-3" />
+                      <span>Link da Web (URL)</span>
+                    </button>
+                  </div>
                 </div>
 
+                {/* Upload File Mode */}
+                {imageInputMode === "upload" && (
+                  <div className="space-y-2">
+                    <label className="border-2 border-dashed border-[#E8DCCF] hover:border-[#B87333] rounded-2xl p-4 flex flex-col items-center justify-center gap-2 bg-white cursor-pointer transition-colors group">
+                      <div className="w-10 h-10 rounded-full bg-[#F4ECE1] group-hover:bg-[#EADBC8] text-[#B87333] flex items-center justify-center transition-colors">
+                        {isUploadingImage ? (
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : (
+                          <Upload className="w-5 h-5" />
+                        )}
+                      </div>
+                      <div className="text-center">
+                        <span className="text-xs font-semibold text-[#332219] block">
+                          {isUploadingImage
+                            ? "Comprimindo e otimizando imagem..."
+                            : "Clique aqui para escolher a foto no seu dispositivo"}
+                        </span>
+                        <span className="text-[11px] text-[#9C8A7E]">
+                          Celular ou computador (JPG, PNG ou WEBP)
+                        </span>
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        disabled={isUploadingImage}
+                        onChange={handleImageFileUpload}
+                        className="hidden"
+                      />
+                    </label>
+
+                    {uploadFeedback && (
+                      <p className="text-xs text-center font-medium text-[#25D366] animate-fade-in">
+                        {uploadFeedback}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* URL Mode */}
+                {imageInputMode === "url" && (
+                  <div className="space-y-1.5">
+                    <div className="flex gap-2">
+                      <input
+                        type="url"
+                        value={editingProduct.imageUrl}
+                        onChange={(e) =>
+                          setEditingProduct({ ...editingProduct, imageUrl: e.target.value })
+                        }
+                        placeholder="https://exemplo.com/sua-foto-vela.jpg"
+                        className="flex-1 px-4 py-2.5 rounded-xl border border-[#E8DCCF] text-xs bg-white focus:border-[#B87333] outline-hidden"
+                      />
+                    </div>
+                    <span className="text-[10px] text-[#9C8A7E] block">
+                      Cole o link direto da imagem hospedada em qualquer site ou repositório.
+                    </span>
+                  </div>
+                )}
+
+                {/* Preview Thumbnail */}
                 {editingProduct.imageUrl && (
-                  <div className="w-24 h-24 rounded-xl overflow-hidden bg-gray-100 border border-[#E8DCCF]">
-                    <img
-                      src={editingProduct.imageUrl}
-                      alt="Pré-visualização"
-                      className="w-full h-full object-cover"
-                    />
+                  <div className="pt-2 flex items-center gap-3 border-t border-[#E8DCCF]/60">
+                    <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-100 border border-[#E8DCCF] flex-shrink-0">
+                      <img
+                        src={editingProduct.imageUrl}
+                        alt="Pré-visualização"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div>
+                      <span className="text-[11px] font-bold text-[#332219] block">
+                        Foto Atual Definida
+                      </span>
+                      <span className="text-[10px] text-[#9C8A7E] block">
+                        Essa imagem aparecerá no catálogo para os clientes.
+                      </span>
+                    </div>
                   </div>
                 )}
               </div>
