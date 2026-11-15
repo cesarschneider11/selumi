@@ -32,12 +32,20 @@ O projeto da **Selumi** foi concebido como uma **boutique digital refinada**, in
 
 ## 🌸 Aromas & Essências Configuradas
 
-- **Baunilha Real & Fava Tonka** (Doce, acolhedora e reconfortante)
-- **Lavanda Francesa & Camomila** (Calmante, serena e relaxante)
-- **Flor de Cerejeira & Pêssego** (Floral luminosa, delicada e sofisticada)
-- **Capim Limão & Alecrim** (Revigorante, fresca e herbal)
-- **Canela & Especiarias Quentes** (Aconchegante, marcante e calorosa)
-- **Madeira Nobre & Âmbar** (Sofisticada, terrosa e intimista)
+1. **Vanilla Sugar** — Adocicada (baunilha, caramelo, jasmim e framboesa)
+2. **Confort Baby** — Infantil (pera, maçã, rosa, jasmim e lírio-do-vale)
+3. **La Bomba** — Oriental floral (pitaya, peônia vermelha, frangipani, baunilha e patchouli)
+4. **Sakura Lovers** — Floral frutada adocicada (cereja, cassis, rosa, violeta, framboesa, sândalo e baunilha)
+5. **Bamboo Trouss** — Cítrica herbal aquática (limão, bergamota, notas verdes e aquáticas)
+6. **White Jasmin** — Floral (jasmim, frésia, rosa, lírio-do-vale, maçã e notas verdes)
+7. **Cereja e Avelã** — Adocicada (cereja, avelã, caramelo e baunilha)
+8. **Ginger Bread** — Gourmand especiada (biscoitos, especiarias quentes e caramelo)
+9. **Chá Branco** — Fresco, delicado e levemente herbal
+10. **Flor de Cerejeira** — Floral (flores de cerejeira, sereno e romântico)
+11. **Pinho Siberiano** — Verde, conífero e amadeirado
+12. **Caramelate** — Frutado gourmand, amadeirado (figo, folhas verdes, baunilha, sândalo e caramelo)
+13. **Peônia** — Floral frutado (peônia, pera, pêssego e âmbar)
+14. **Champagne Toast** — Frutado cítrico adocicado (notas cítricas, frutadas e baunilha)
 
 ---
 

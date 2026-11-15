@@ -18,7 +18,7 @@ const FAQS: FaqItem[] = [
   {
     question: "Como funciona a escolha do aroma/essência?",
     answer:
-      "Você escolhe o modelo de vela que mais gostar e, ao clicar nela, seleciona a essência que mais toca seus sentidos (como Baunilha & Tonka, Lavanda Francesa, Flor de Cerejeira, etc.). Todas as velas são produzidas com a fragrância que você escolher.",
+      "Você escolhe o modelo de vela que mais gostar e, ao clicar nela, seleciona a essência que mais toca seus sentidos (como Vanilla Sugar, Confort Baby, Flor de Cerejeira, Champagne Toast, etc.). Todas as velas são produzidas com a fragrância que você escolher.",
   },
   {
     question: "Vocês fazem encomendas personalizadas para casamentos, festas ou empresas?",

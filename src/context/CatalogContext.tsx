@@ -64,7 +64,7 @@ const CatalogContext = createContext<CatalogContextType | undefined>(undefined);
 
 const STORAGE_KEYS = {
   PRODUCTS: "selumi_products_v1",
-  SCENTS: "selumi_scents_v1",
+  SCENTS: "selumi_scents_v2",
   CONFIG: "selumi_config_v1",
   CART: "selumi_cart_v1",
   ADMIN_AUTH: "selumi_admin_auth_v1",

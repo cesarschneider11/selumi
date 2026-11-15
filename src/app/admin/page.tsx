@@ -1165,7 +1165,7 @@ export default function AdminPage() {
                   required
                   value={editingScent.name}
                   onChange={(e) => setEditingScent({ ...editingScent, name: e.target.value })}
-                  placeholder="Ex: Baunilha Real & Fava Tonka"
+                  placeholder="Ex: Vanilla Sugar"
                   className="w-full px-4 py-2.5 rounded-xl border border-[#E8DCCF] text-sm bg-[#FAF7F2]/40 focus:border-[#B87333] outline-hidden"
                 />
               </div>

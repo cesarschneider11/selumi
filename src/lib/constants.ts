@@ -113,7 +113,7 @@ export const INITIAL_SCENTS: Scent[] = [
   {
     id: "scent-sakura-lovers",
     name: "Sakura Lovers",
-    description: "Uma fragrância romântica que combina a suavidade das flores de cerejeira com frutas vermelhas e um fundo cremoso de baunilha. Notas de cereja, cassis, rosa, violeta e framboesa. Combina com: quartos, momentos românticos, presentes delicados e ambientes acolhedores.",
+    description: "Uma fragrância romântica que combina a suavidade das flores de cerejeira com frutas vermelhas e um fundo cremoso de baunilha. Notas de cereja, cassis, rosa, violeta, framboesa, sândalo e baunilha. Combina com: quartos, momentos românticos, presentes delicados e ambientes acolhedores.",
     tags: ["Floral Frutada", "Romântica", "Adocicada"],
     available: true,
   },
