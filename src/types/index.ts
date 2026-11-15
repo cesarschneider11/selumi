@@ -30,13 +30,19 @@ export interface CartItem {
 
 export type PaymentMethod = 'pix' | 'cash' | 'card_future';
 
+export type OrderStatus = 'pendente' | 'confirmado' | 'entregue';
+
 export interface OrderData {
+  id?: string;
   customerName: string;
   customerPhone?: string;
   paymentMethod: PaymentMethod;
   notes?: string;
+  isGift?: boolean;
+  giftMessage?: string;
   items: CartItem[];
   total: number;
+  status?: OrderStatus;
   createdAt: string;
 }
 
