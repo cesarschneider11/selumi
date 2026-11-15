@@ -69,7 +69,12 @@ const STORAGE_KEYS = {
   CART: "selumi_cart_v1",
   ADMIN_AUTH: "selumi_admin_auth_v1",
   ORDERS: "selumi_orders_history_v1",
+  SCENTS_VERSION: "selumi_scents_version",
 };
+
+// Versão das essências oficiais. Ao alterar, o cache antigo é descartado
+// e a lista é forçada para INITIAL_SCENTS no próximo carregamento.
+const SCENTS_VERSION = "2026-11-14-essencias-oficiais";
 
 export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
@@ -95,8 +100,14 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }
 
       const savedScents = localStorage.getItem(STORAGE_KEYS.SCENTS);
-      if (savedScents) {
+      const savedScentsVersion = localStorage.getItem(STORAGE_KEYS.SCENTS_VERSION);
+      if (savedScents && savedScentsVersion === SCENTS_VERSION) {
         setScents(JSON.parse(savedScents));
+      } else {
+        // Migração: descarta cache antigo (ex.: 6 essências) e aplica as oficiais
+        setScents(INITIAL_SCENTS);
+        localStorage.removeItem(STORAGE_KEYS.SCENTS);
+        localStorage.setItem(STORAGE_KEYS.SCENTS_VERSION, SCENTS_VERSION);
       }
 
       const savedConfig = localStorage.getItem(STORAGE_KEYS.CONFIG);
@@ -139,6 +150,7 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
     if (!isLoaded) return;
     try {
       localStorage.setItem(STORAGE_KEYS.SCENTS, JSON.stringify(scents));
+      localStorage.setItem(STORAGE_KEYS.SCENTS_VERSION, SCENTS_VERSION);
     } catch (e) {
       console.error("Erro ao salvar essências:", e);
     }
