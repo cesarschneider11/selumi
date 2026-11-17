@@ -3,8 +3,6 @@ import { getServiceSupabase } from "@/lib/supabase";
 import { INITIAL_PRODUCTS, INITIAL_SCENTS, INITIAL_CONFIG } from "@/lib/constants";
 import { fromDbConfig, fromDbProduct, fromDbScent, fromDbOrder } from "@/lib/db-mappers";
 
-export const dynamic = "force-dynamic";
-
 export async function GET() {
   try {
     const supabase = getServiceSupabase();
