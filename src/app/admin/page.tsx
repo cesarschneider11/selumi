@@ -27,7 +27,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { useCatalog } from "@/context/CatalogContext";
-import { Product, Scent, StoreConfig } from "@/types";
+import { Product, Scent, StoreConfig, OrderStatus } from "@/types";
 import { compressImageFile } from "@/lib/image-compressor";
 
 export default function AdminPage() {
@@ -45,6 +45,7 @@ export default function AdminPage() {
     deleteScent,
     saveConfig,
     resetToDefaults,
+    refreshCatalog,
     exportCatalogData,
     importCatalogData,
     updateOrderStatus,
@@ -72,7 +73,7 @@ export default function AdminPage() {
 
   // Settings state
   const [tempConfig, setTempConfig] = useState<StoreConfig>(config);
-  const [configSavedSuccess, setConfigSavedSuccess] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Notification feedback
   const [actionNotice, setActionNotice] = useState<string | null>(null);
@@ -83,9 +84,11 @@ export default function AdminPage() {
   };
 
   // Handle Login
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const success = loginAdmin(username, password);
+    setIsSaving(true);
+    const success = await loginAdmin(username, password);
+    setIsSaving(false);
     if (!success) {
       setLoginError("Usuário ou senha incorretos. Verifique suas credenciais.");
     } else {
@@ -151,9 +154,11 @@ export default function AdminPage() {
 
             <button
               type="submit"
-              className="w-full bg-[#B87333] hover:bg-[#9E5F28] text-white py-3.5 px-6 rounded-xl font-medium text-sm transition-all shadow-md hover:shadow-lg active:scale-98 cursor-pointer mt-2"
+              disabled={isSaving}
+              className="w-full bg-[#B87333] hover:bg-[#9E5F28] disabled:opacity-50 disabled:cursor-not-allowed text-white py-3.5 px-6 rounded-xl font-medium text-sm transition-all shadow-md hover:shadow-lg active:scale-98 cursor-pointer mt-2 flex items-center justify-center gap-2"
             >
-              Acessar Painel
+              {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
+              {isSaving ? "Entrando..." : "Acessar Painel"}
             </button>
           </form>
 
@@ -192,11 +197,14 @@ export default function AdminPage() {
     setIsProductModalOpen(true);
   };
 
-  const handleSaveProductSubmit = (e: React.FormEvent) => {
+  const handleSaveProductSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingProduct || !editingProduct.name.trim()) return;
-    saveProduct(editingProduct);
+    setIsSaving(true);
+    await saveProduct(editingProduct);
+    setIsSaving(false);
     setIsProductModalOpen(false);
+    await refreshCatalog();
     showNotice(`Vela "${editingProduct.name}" salva com sucesso!`);
   };
 
@@ -237,21 +245,19 @@ export default function AdminPage() {
     setIsScentModalOpen(true);
   };
 
-  const handleSaveScentSubmit = (e: React.FormEvent) => {
+  const handleSaveScentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingScent || !editingScent.name.trim()) return;
-    saveScent(editingScent);
+    await saveScent(editingScent);
     setIsScentModalOpen(false);
     showNotice(`Essência "${editingScent.name}" salva com sucesso!`);
   };
 
   // --- Handlers for Settings ---
-  const handleSaveConfig = (e: React.FormEvent) => {
+  const handleSaveConfig = async (e: React.FormEvent) => {
     e.preventDefault();
-    saveConfig(tempConfig);
-    setConfigSavedSuccess(true);
+    await saveConfig(tempConfig);
     showNotice("Configurações da loja atualizadas!");
-    setTimeout(() => setConfigSavedSuccess(false), 2500);
   };
 
   // --- Handlers for Backup & Restore ---
@@ -267,14 +273,14 @@ export default function AdminPage() {
     showNotice("Backup baixado com sucesso!");
   };
 
-  const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (event) => {
+      reader.onload = async (event) => {
         const text = event.target?.result as string;
         if (text) {
-          const ok = importCatalogData(text);
+          const ok = await importCatalogData(text);
           if (ok) {
             showNotice("Catálogo importado com sucesso!");
           } else {
@@ -286,9 +292,9 @@ export default function AdminPage() {
     }
   };
 
-  const handleResetDefaults = () => {
+  const handleResetDefaults = async () => {
     if (window.confirm("Tem certeza que deseja restaurar o catálogo para as 5 velas e essências originais da Selumi?")) {
-      resetToDefaults();
+      await resetToDefaults();
       showNotice("Catálogo restaurado aos padrões originais!");
     }
   };
@@ -323,7 +329,7 @@ export default function AdminPage() {
             </Link>
 
             <button
-              onClick={logoutAdmin}
+              onClick={() => { logoutAdmin(); }}
               className="text-xs text-red-600 hover:text-red-700 px-3 py-1.5 rounded-full border border-red-200 hover:bg-red-50 transition-colors flex items-center gap-1.5 cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5" />
@@ -489,9 +495,9 @@ export default function AdminPage() {
                       </button>
 
                       <button
-                        onClick={() => {
+                        onClick={async () => {
                           if (window.confirm(`Deseja realmente excluir a vela "${product.name}"?`)) {
-                            deleteProduct(product.id);
+                            await deleteProduct(product.id);
                             showNotice(`Vela "${product.name}" removida.`);
                           }
                         }}
@@ -522,13 +528,13 @@ export default function AdminPage() {
               </div>
 
               {orders.length > 0 && (
-                <button
-                  onClick={() => {
-                    if (window.confirm("Deseja limpar o histórico de pedidos deste navegador?")) {
-                      clearOrdersHistory();
-                      showNotice("Histórico limpo!");
-                    }
-                  }}
+              <button
+                onClick={async () => {
+                  if (window.confirm("Deseja limpar o histórico de pedidos deste navegador?")) {
+                    await clearOrdersHistory();
+                    showNotice("Histórico limpo!");
+                  }
+                }}
                   className="text-xs text-red-600 hover:text-red-700 px-4 py-2 rounded-xl border border-red-200 hover:bg-red-50 transition-colors cursor-pointer"
                 >
                   Limpar Histórico
@@ -581,9 +587,9 @@ export default function AdminPage() {
                       <div className="flex items-center gap-2">
                         <select
                           value={ord.status || "pendente"}
-                          onChange={(e) =>
-                            ord.id && updateOrderStatus(ord.id, e.target.value as any)
-                          }
+                          onChange={async (e) => {
+                            if (ord.id) await updateOrderStatus(ord.id, e.target.value as OrderStatus);
+                          }}
                           className="text-xs font-semibold px-3 py-1.5 rounded-full border border-[#E8DCCF] bg-[#FAF7F2] text-[#332219] outline-hidden cursor-pointer"
                         >
                           <option value="pendente">⏳ Pendente</option>
@@ -694,13 +700,13 @@ export default function AdminPage() {
                       <span>Editar</span>
                     </button>
 
-                    <button
-                      onClick={() => {
-                        if (window.confirm(`Deseja excluir a essência "${scent.name}"?`)) {
-                          deleteScent(scent.id);
-                          showNotice(`Essência "${scent.name}" removida.`);
-                        }
-                      }}
+                      <button
+                        onClick={async () => {
+                          if (window.confirm(`Deseja excluir a essência "${scent.name}"?`)) {
+                            await deleteScent(scent.id);
+                            showNotice(`Essência "${scent.name}" removida.`);
+                          }
+                        }}
                       className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
                       title="Excluir essência"
                     >
@@ -793,10 +799,11 @@ export default function AdminPage() {
               <div className="pt-4 border-t border-[#F4ECE1]">
                 <button
                   type="submit"
-                  className="bg-[#B87333] hover:bg-[#9E5F28] text-white py-3 px-6 rounded-xl font-medium text-xs sm:text-sm flex items-center gap-2 transition-all shadow-xs cursor-pointer"
+                  disabled={isSaving}
+                  className="bg-[#B87333] hover:bg-[#9E5F28] disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 px-6 rounded-xl font-medium text-xs sm:text-sm flex items-center gap-2 transition-all shadow-xs cursor-pointer"
                 >
                   <Save className="w-4 h-4" />
-                  <span>Salvar Configurações</span>
+                  <span>{isSaving ? "Salvando..." : "Salvar Configurações"}</span>
                 </button>
               </div>
             </form>
@@ -1123,9 +1130,11 @@ export default function AdminPage() {
                 </button>
                 <button
                   type="submit"
-                  className="bg-[#B87333] hover:bg-[#9E5F28] text-white px-6 py-2.5 rounded-xl text-xs font-semibold transition-colors shadow-xs"
+                  disabled={isSaving}
+                  className="bg-[#B87333] hover:bg-[#9E5F28] disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2.5 rounded-xl text-xs font-semibold transition-colors shadow-xs flex items-center gap-2"
                 >
-                  Salvar Vela
+                  {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {isSaving ? "Salvando..." : "Salvar Vela"}
                 </button>
               </div>
             </form>
@@ -1211,9 +1220,10 @@ export default function AdminPage() {
                 </button>
                 <button
                   type="submit"
-                  className="bg-[#B87333] hover:bg-[#9E5F28] text-white px-6 py-2.5 rounded-xl text-xs font-semibold transition-colors shadow-xs"
+                  disabled={isSaving}
+                  className="bg-[#B87333] hover:bg-[#9E5F28] disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2.5 rounded-xl text-xs font-semibold transition-colors shadow-xs"
                 >
-                  Salvar Essência
+                  {isSaving ? "Salvando..." : "Salvar Essência"}
                 </button>
               </div>
             </form>
