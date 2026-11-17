@@ -1,8 +1,8 @@
-"use client";
+﻿"use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { Product, Scent, CartItem, StoreConfig, PaymentMethod, OrderData, OrderStatus } from "@/types";
-import { INITIAL_PRODUCTS, INITIAL_SCENTS, INITIAL_CONFIG, ADMIN_CREDENTIALS } from "@/lib/constants";
+import { INITIAL_PRODUCTS, INITIAL_SCENTS, INITIAL_CONFIG } from "@/lib/constants";
 
 interface CatalogContextType {
   products: Product[];
@@ -18,22 +18,20 @@ interface CatalogContextType {
   orders: OrderData[];
   lastCompletedOrder: OrderData | null;
   isSuccessModalOpen: boolean;
+  isLoading: boolean;
 
-  // Cart actions
   addToCart: (product: Product, scent: Scent, quantity: number) => void;
   updateQuantity: (cartItemId: string, newQuantity: number) => void;
   removeFromCart: (cartItemId: string) => void;
   clearCart: () => void;
   setIsCartOpen: (open: boolean) => void;
 
-  // Modals
   openProductModal: (product: Product) => void;
   closeProductModal: () => void;
   openCheckout: () => void;
   closeCheckout: () => void;
   closeSuccessModal: () => void;
 
-  // Checkout & WhatsApp
   submitOrder: (order: {
     customerName: string;
     customerPhone?: string;
@@ -41,40 +39,45 @@ interface CatalogContextType {
     notes?: string;
     isGift?: boolean;
     giftMessage?: string;
-  }) => void;
+  }) => Promise<void>;
   generateWhatsAppLink: (orderData: OrderData) => string;
   getWhatsAppSupportLink: () => string;
-  updateOrderStatus: (orderId: string, status: OrderStatus) => void;
-  clearOrdersHistory: () => void;
+  updateOrderStatus: (orderId: string, status: OrderStatus) => Promise<void>;
+  clearOrdersHistory: () => Promise<void>;
 
-  // Admin actions
-  loginAdmin: (user: string, pass: string) => boolean;
-  logoutAdmin: () => void;
-  saveProduct: (product: Product) => void;
-  deleteProduct: (productId: string) => void;
-  saveScent: (scent: Scent) => void;
-  deleteScent: (scentId: string) => void;
-  saveConfig: (newConfig: StoreConfig) => void;
-  resetToDefaults: () => void;
-  importCatalogData: (jsonData: string) => boolean;
+  loginAdmin: (user: string, pass: string) => Promise<boolean>;
+  logoutAdmin: () => Promise<void>;
+  saveProduct: (product: Product) => Promise<void>;
+  deleteProduct: (productId: string) => Promise<void>;
+  saveScent: (scent: Scent) => Promise<void>;
+  deleteScent: (scentId: string) => Promise<void>;
+  saveConfig: (newConfig: StoreConfig) => Promise<void>;
+  resetToDefaults: () => Promise<void>;
+  importCatalogData: (jsonData: string) => Promise<boolean>;
   exportCatalogData: () => string;
+  refreshCatalog: () => Promise<void>;
 }
 
 const CatalogContext = createContext<CatalogContextType | undefined>(undefined);
 
 const STORAGE_KEYS = {
-  PRODUCTS: "selumi_products_v1",
-  SCENTS: "selumi_scents_v2",
-  CONFIG: "selumi_config_v1",
   CART: "selumi_cart_v1",
   ADMIN_AUTH: "selumi_admin_auth_v1",
-  ORDERS: "selumi_orders_history_v1",
-  SCENTS_VERSION: "selumi_scents_version",
 };
 
-// Versão das essências oficiais. Ao alterar, o cache antigo é descartado
-// e a lista é forçada para INITIAL_SCENTS no próximo carregamento.
-const SCENTS_VERSION = "2026-11-14-essencias-oficiais";
+async function api(path: string, options?: RequestInit) {
+  const res = await fetch(path, {
+    ...options,
+    headers: { "Content-Type": "application/json", ...(options?.headers || {}) },
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    let msg = "Erro na requisição";
+    try { const j = await res.json(); msg = j.error || msg; } catch {}
+    throw new Error(msg);
+  }
+  return res.json().catch(() => ({}));
+}
 
 export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
@@ -83,6 +86,7 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [cart, setCart] = useState<CartItem[]>([]);
   const [orders, setOrders] = useState<OrderData[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedProductForModal, setSelectedProductForModal] = useState<Product | null>(null);
@@ -91,179 +95,75 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [lastCompletedOrder, setLastCompletedOrder] = useState<OrderData | null>(null);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
 
-  // Load persisted data on client mount
-  useEffect(() => {
+  const refreshCatalog = useCallback(async () => {
     try {
-      const savedProducts = localStorage.getItem(STORAGE_KEYS.PRODUCTS);
-      if (savedProducts) {
-        setProducts(JSON.parse(savedProducts));
-      }
-
-      const savedScents = localStorage.getItem(STORAGE_KEYS.SCENTS);
-      const savedScentsVersion = localStorage.getItem(STORAGE_KEYS.SCENTS_VERSION);
-      if (savedScents && savedScentsVersion === SCENTS_VERSION) {
-        setScents(JSON.parse(savedScents));
-      } else {
-        // Migração: descarta cache antigo (ex.: 6 essências) e aplica as oficiais
-        setScents(INITIAL_SCENTS);
-        localStorage.removeItem(STORAGE_KEYS.SCENTS);
-        localStorage.setItem(STORAGE_KEYS.SCENTS_VERSION, SCENTS_VERSION);
-      }
-
-      const savedConfig = localStorage.getItem(STORAGE_KEYS.CONFIG);
-      if (savedConfig) {
-        setConfig(JSON.parse(savedConfig));
-      }
-
-      const savedCart = localStorage.getItem(STORAGE_KEYS.CART);
-      if (savedCart) {
-        setCart(JSON.parse(savedCart));
-      }
-
-      const savedOrders = localStorage.getItem(STORAGE_KEYS.ORDERS);
-      if (savedOrders) {
-        setOrders(JSON.parse(savedOrders));
-      }
-
-      const savedAdminAuth = sessionStorage.getItem(STORAGE_KEYS.ADMIN_AUTH);
-      if (savedAdminAuth === "true") {
-        setIsAdminLoggedIn(true);
-      }
+      const data = await api("/api/catalog");
+      if (data.config) setConfig(data.config);
+      if (Array.isArray(data.products)) setProducts(data.products);
+      if (Array.isArray(data.scents)) setScents(data.scents);
+      if (Array.isArray(data.orders)) setOrders(data.orders);
     } catch (e) {
-      console.error("Erro ao carregar dados do localStorage:", e);
+      console.error("Erro ao carregar catálogo do servidor:", e);
     } finally {
-      setIsLoaded(true);
+      setIsLoading(false);
     }
   }, []);
 
-  // Save changes to localStorage after initial load
   useEffect(() => {
-    if (!isLoaded) return;
     try {
-      localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(products));
+      const savedCart = localStorage.getItem(STORAGE_KEYS.CART);
+      if (savedCart) setCart(JSON.parse(savedCart));
+      const savedAdminAuth = sessionStorage.getItem(STORAGE_KEYS.ADMIN_AUTH);
+      if (savedAdminAuth === "true") setIsAdminLoggedIn(true);
     } catch (e) {
-      console.error("Erro ao salvar produtos:", e);
+      console.error("Erro ao carregar dados locais:", e);
+    } finally {
+      setIsLoaded(true);
     }
-  }, [products, isLoaded]);
+    refreshCatalog();
+  }, [refreshCatalog]);
 
   useEffect(() => {
     if (!isLoaded) return;
-    try {
-      localStorage.setItem(STORAGE_KEYS.SCENTS, JSON.stringify(scents));
-      localStorage.setItem(STORAGE_KEYS.SCENTS_VERSION, SCENTS_VERSION);
-    } catch (e) {
-      console.error("Erro ao salvar essências:", e);
-    }
-  }, [scents, isLoaded]);
-
-  useEffect(() => {
-    if (!isLoaded) return;
-    try {
-      localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify(config));
-    } catch (e) {
-      console.error("Erro ao salvar configurações:", e);
-    }
-  }, [config, isLoaded]);
-
-  useEffect(() => {
-    if (!isLoaded) return;
-    try {
-      localStorage.setItem(STORAGE_KEYS.CART, JSON.stringify(cart));
-    } catch (e) {
-      console.error("Erro ao salvar carrinho:", e);
-    }
+    try { localStorage.setItem(STORAGE_KEYS.CART, JSON.stringify(cart)); } catch (e) { console.error(e); }
   }, [cart, isLoaded]);
 
-  // Cart operations
   const addToCart = (product: Product, scent: Scent, quantity: number) => {
     const cartItemId = `${product.id}__${scent.id}`;
-
     setCart((prevCart) => {
       const existingItemIndex = prevCart.findIndex((item) => item.id === cartItemId);
-
       if (existingItemIndex > -1) {
         const updated = [...prevCart];
         const newQty = updated[existingItemIndex].quantity + quantity;
-        updated[existingItemIndex] = {
-          ...updated[existingItemIndex],
-          quantity: newQty,
-          totalPrice: newQty * product.price,
-        };
+        updated[existingItemIndex] = { ...updated[existingItemIndex], quantity: newQty, totalPrice: newQty * product.price };
         return updated;
       } else {
-        const newItem: CartItem = {
-          id: cartItemId,
-          product,
-          scent,
-          quantity,
-          unitPrice: product.price,
-          totalPrice: quantity * product.price,
-        };
+        const newItem: CartItem = { id: cartItemId, product, scent, quantity, unitPrice: product.price, totalPrice: quantity * product.price };
         return [...prevCart, newItem];
       }
     });
-
     setIsCartOpen(true);
     setSelectedProductForModal(null);
   };
 
   const updateQuantity = (cartItemId: string, newQuantity: number) => {
-    if (newQuantity <= 0) {
-      removeFromCart(cartItemId);
-      return;
-    }
-
-    setCart((prevCart) =>
-      prevCart.map((item) => {
-        if (item.id === cartItemId) {
-          return {
-            ...item,
-            quantity: newQuantity,
-            totalPrice: newQuantity * item.unitPrice,
-          };
-        }
-        return item;
-      })
-    );
+    if (newQuantity <= 0) { removeFromCart(cartItemId); return; }
+    setCart((prevCart) => prevCart.map((item) => item.id === cartItemId ? { ...item, quantity: newQuantity, totalPrice: newQuantity * item.unitPrice } : item));
   };
 
-  const removeFromCart = (cartItemId: string) => {
-    setCart((prevCart) => prevCart.filter((item) => item.id !== cartItemId));
-  };
-
-  const clearCart = () => {
-    setCart([]);
-  };
+  const removeFromCart = (cartItemId: string) => setCart((prevCart) => prevCart.filter((item) => item.id !== cartItemId));
+  const clearCart = () => setCart([]);
 
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
   const cartTotal = cart.reduce((acc, item) => acc + item.totalPrice, 0);
 
-  // Modals
-  const openProductModal = (product: Product) => {
-    setSelectedProductForModal(product);
-  };
+  const openProductModal = (product: Product) => setSelectedProductForModal(product);
+  const closeProductModal = () => setSelectedProductForModal(null);
+  const openCheckout = () => { setIsCartOpen(false); setIsCheckoutOpen(true); };
+  const closeCheckout = () => setIsCheckoutOpen(false);
+  const closeSuccessModal = () => setIsSuccessModalOpen(false);
 
-  const closeProductModal = () => {
-    setSelectedProductForModal(null);
-  };
-
-  const openCheckout = () => {
-    setIsCartOpen(false);
-    setIsCheckoutOpen(true);
-  };
-
-  const closeCheckout = () => {
-    setIsCheckoutOpen(false);
-  };
-
-  const closeSuccessModal = () => {
-    setIsSuccessModalOpen(false);
-  };
-
-  // WhatsApp Helpers
-  const formatCurrency = (val: number) => {
-    return val.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-  };
+  const formatCurrency = (val: number) => val.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
   const generateWhatsAppMessage = (orderData: OrderData): string => {
     const paymentLabels: Record<PaymentMethod, string> = {
@@ -271,42 +171,28 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
       cash: "Dinheiro na entrega / retirada presencial",
       card_future: "Cartão / Mercado Pago (Em breve)",
     };
-
     let msg = `🕯️ *NOVO PEDIDO — SELUMI*\n`;
     msg += `_Luz que acolhe_\n`;
     msg += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
-
     msg += `👤 *Cliente:* ${orderData.customerName.trim()}\n`;
-    if (orderData.customerPhone) {
-      msg += `📱 *Telefone:* ${orderData.customerPhone.trim()}\n`;
-    }
+    if (orderData.customerPhone) msg += `📱 *Telefone:* ${orderData.customerPhone.trim()}\n`;
     msg += `\n📦 *Itens Escolhidos:*\n`;
-
     orderData.items.forEach((item, index) => {
       msg += `\n*${index + 1}. ${item.product.name}* (x${item.quantity})\n`;
       msg += `   └ *Aroma:* ${item.scent.name}\n`;
       msg += `   └ *Valor unitário:* ${formatCurrency(item.unitPrice)}\n`;
       msg += `   └ *Subtotal:* ${formatCurrency(item.totalPrice)}\n`;
     });
-
     msg += `\n━━━━━━━━━━━━━━━━━━━━━\n`;
     msg += `💰 *VALOR TOTAL:* ${formatCurrency(orderData.total)}\n`;
     msg += `💳 *Forma de Pagamento:* ${paymentLabels[orderData.paymentMethod] || orderData.paymentMethod}\n`;
-
-    if (orderData.notes && orderData.notes.trim()) {
-      msg += `📝 *Observações / Detalhes:* ${orderData.notes.trim()}\n`;
-    }
-
+    if (orderData.notes && orderData.notes.trim()) msg += `📝 *Observações / Detalhes:* ${orderData.notes.trim()}\n`;
     if (orderData.isGift) {
       msg += `🎁 *Embalagem para Presente:* Sim\n`;
-      if (orderData.giftMessage && orderData.giftMessage.trim()) {
-        msg += `💌 *Dedicatória:* "${orderData.giftMessage.trim()}"\n`;
-      }
+      if (orderData.giftMessage && orderData.giftMessage.trim()) msg += `💌 *Dedicatória:* "${orderData.giftMessage.trim()}"\n`;
     }
-
     msg += `━━━━━━━━━━━━━━━━━━━━━\n`;
     msg += `Olá, acabei de montar meu pedido pelo catálogo digital da Selumi! Gostaria de confirmar a disponibilidade e combinar os detalhes da entrega/retirada. ✨`;
-
     return msg;
   };
 
@@ -318,13 +204,11 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const getWhatsAppSupportLink = (): string => {
     const cleanNumber = config.whatsappNumber.replace(/\D/g, "");
-    const message = encodeURIComponent(
-      `Olá! Estava navegando no catálogo digital da Selumi e gostaria de tirar uma dúvida ou saber mais sobre as velas aromáticas. ✨`
-    );
+    const message = encodeURIComponent(`Olá! Estava navegando no catálogo digital da Selumi e gostaria de tirar uma dúvida ou saber mais sobre as velas aromáticas. ✨`);
     return `https://wa.me/${cleanNumber}?text=${message}`;
   };
 
-  const submitOrder = (orderInput: {
+  const submitOrder = async (orderInput: {
     customerName: string;
     customerPhone?: string;
     paymentMethod: PaymentMethod;
@@ -340,189 +224,97 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
       total: cartTotal,
       createdAt: new Date().toISOString(),
     };
-
-    setOrders((prev) => [orderData, ...prev]);
     try {
-      localStorage.setItem(
-        STORAGE_KEYS.ORDERS,
-        JSON.stringify([orderData, ...orders])
-      );
+      await api("/api/orders", { method: "POST", body: JSON.stringify(orderData) });
     } catch (e) {
-      console.error(e);
+      console.error("Erro ao salvar pedido no servidor:", e);
     }
-
+    setOrders((prev) => [orderData, ...prev]);
     setLastCompletedOrder(orderData);
     setIsCheckoutOpen(false);
     setIsSuccessModalOpen(true);
-
-    // Open WhatsApp in new tab or app
     const waLink = generateWhatsAppLink(orderData);
     window.open(waLink, "_blank", "noopener,noreferrer");
-
-    // Clear cart after order is triggered
     clearCart();
   };
 
-  const updateOrderStatus = (orderId: string, status: OrderStatus) => {
-    setOrders((prev) => {
-      const updated = prev.map((ord) => (ord.id === orderId ? { ...ord, status } : ord));
-      try {
-        localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(updated));
-      } catch (e) {
-        console.error(e);
-      }
-      return updated;
-    });
+  const updateOrderStatus = async (orderId: string, status: OrderStatus) => {
+    setOrders((prev) => prev.map((ord) => (ord.id === orderId ? { ...ord, status } : ord)));
+    try { await api("/api/admin/orders", { method: "PATCH", body: JSON.stringify({ id: orderId, status }) }); } catch (e) { console.error(e); await refreshCatalog(); }
   };
 
-  const clearOrdersHistory = () => {
+  const clearOrdersHistory = async () => {
     setOrders([]);
-    localStorage.removeItem(STORAGE_KEYS.ORDERS);
+    try { await api("/api/admin/orders", { method: "DELETE" }); } catch (e) { console.error(e); await refreshCatalog(); }
   };
 
-  // Admin Actions
-  const loginAdmin = (user: string, pass: string): boolean => {
-    if (user.trim() === ADMIN_CREDENTIALS.username && pass === ADMIN_CREDENTIALS.password) {
-      setIsAdminLoggedIn(true);
-      sessionStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, "true");
-      return true;
-    }
-    return false;
+  const loginAdmin = async (user: string, pass: string): Promise<boolean> => {
+    try {
+      const res = await fetch("/api/admin/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username: user, password: pass }) });
+      if (res.ok) { setIsAdminLoggedIn(true); sessionStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, "true"); await refreshCatalog(); return true; }
+      return false;
+    } catch { return false; }
   };
 
-  const logoutAdmin = () => {
+  const logoutAdmin = async () => {
+    try { await fetch("/api/admin/logout", { method: "POST" }); } catch {}
     setIsAdminLoggedIn(false);
     sessionStorage.removeItem(STORAGE_KEYS.ADMIN_AUTH);
   };
 
-  const saveProduct = (product: Product) => {
-    setProducts((prev) => {
-      const idx = prev.findIndex((p) => p.id === product.id);
-      let updated: Product[];
-      if (idx > -1) {
-        updated = [...prev];
-        updated[idx] = product;
-      } else {
-        updated = [product, ...prev];
-      }
-      try {
-        localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(updated));
-      } catch (e) {
-        console.error("Erro ao salvar produto no localStorage:", e);
-      }
-      return updated;
-    });
+  const saveProduct = async (product: Product) => {
+    setProducts((prev) => { const idx = prev.findIndex((p) => p.id === product.id); if (idx > -1) { const u = [...prev]; u[idx] = product; return u; } return [product, ...prev]; });
+    try { await api("/api/admin/products", { method: "POST", body: JSON.stringify(product) }); } catch (e) { console.error(e); await refreshCatalog(); }
   };
 
-  const deleteProduct = (productId: string) => {
-    setProducts((prev) => {
-      const updated = prev.filter((p) => p.id !== productId);
-      try {
-        localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(updated));
-      } catch (e) {
-        console.error("Erro ao salvar produtos:", e);
-      }
-      return updated;
-    });
+  const deleteProduct = async (productId: string) => {
+    setProducts((prev) => prev.filter((p) => p.id !== productId));
+    try { await api(`/api/admin/products?id=${encodeURIComponent(productId)}`, { method: "DELETE" }); } catch (e) { console.error(e); await refreshCatalog(); }
   };
 
-  const saveScent = (scent: Scent) => {
-    setScents((prev) => {
-      const idx = prev.findIndex((s) => s.id === scent.id);
-      if (idx > -1) {
-        const updated = [...prev];
-        updated[idx] = scent;
-        return updated;
-      }
-      return [...prev, scent];
-    });
+  const saveScent = async (scent: Scent) => {
+    setScents((prev) => { const idx = prev.findIndex((s) => s.id === scent.id); if (idx > -1) { const u = [...prev]; u[idx] = scent; return u; } return [...prev, scent]; });
+    try { await api("/api/admin/scents", { method: "POST", body: JSON.stringify(scent) }); } catch (e) { console.error(e); await refreshCatalog(); }
   };
 
-  const deleteScent = (scentId: string) => {
+  const deleteScent = async (scentId: string) => {
     setScents((prev) => prev.filter((s) => s.id !== scentId));
+    try { await api(`/api/admin/scents?id=${encodeURIComponent(scentId)}`, { method: "DELETE" }); } catch (e) { console.error(e); await refreshCatalog(); }
   };
 
-  const saveConfig = (newConfig: StoreConfig) => {
+  const saveConfig = async (newConfig: StoreConfig) => {
     setConfig(newConfig);
+    try { await api("/api/admin/config", { method: "POST", body: JSON.stringify(newConfig) }); } catch (e) { console.error(e); await refreshCatalog(); }
   };
 
-  const resetToDefaults = () => {
-    setProducts(INITIAL_PRODUCTS);
-    setScents(INITIAL_SCENTS);
-    setConfig(INITIAL_CONFIG);
-    localStorage.removeItem(STORAGE_KEYS.PRODUCTS);
-    localStorage.removeItem(STORAGE_KEYS.SCENTS);
-    localStorage.removeItem(STORAGE_KEYS.CONFIG);
+  const resetToDefaults = async () => {
+    try { await api("/api/admin/seed", { method: "POST" }); await refreshCatalog(); } catch (e) { console.error(e); }
   };
 
-  const exportCatalogData = (): string => {
-    return JSON.stringify({ products, scents, config }, null, 2);
-  };
+  const exportCatalogData = (): string => JSON.stringify({ products, scents, config }, null, 2);
 
-  const importCatalogData = (jsonData: string): boolean => {
+  const importCatalogData = async (jsonData: string): Promise<boolean> => {
     try {
       const parsed = JSON.parse(jsonData);
-      if (parsed.products && Array.isArray(parsed.products)) {
-        setProducts(parsed.products);
-      }
-      if (parsed.scents && Array.isArray(parsed.scents)) {
-        setScents(parsed.scents);
-      }
-      if (parsed.config && typeof parsed.config === "object") {
-        setConfig(parsed.config);
-      }
+      if (parsed.config) await saveConfig(parsed.config);
+      if (Array.isArray(parsed.products)) { for (const p of parsed.products) await saveProduct(p); }
+      if (Array.isArray(parsed.scents)) { for (const s of parsed.scents) await saveScent(s); }
+      await refreshCatalog();
       return true;
-    } catch (e) {
-      console.error("Falha ao importar JSON:", e);
-      return false;
-    }
+    } catch (e) { console.error("Falha ao importar JSON:", e); return false; }
   };
 
   return (
     <CatalogContext.Provider
       value={{
-        products,
-        scents,
-        config,
-        cart,
-        cartCount,
-        cartTotal,
-        isCartOpen,
-        selectedProductForModal,
-        isCheckoutOpen,
-        isAdminLoggedIn,
-        orders,
-        lastCompletedOrder,
-        isSuccessModalOpen,
-
-        addToCart,
-        updateQuantity,
-        removeFromCart,
-        clearCart,
-        setIsCartOpen,
-
-        openProductModal,
-        closeProductModal,
-        openCheckout,
-        closeCheckout,
-        closeSuccessModal,
-
-        submitOrder,
-        generateWhatsAppLink,
-        getWhatsAppSupportLink,
-        updateOrderStatus,
-        clearOrdersHistory,
-
-        loginAdmin,
-        logoutAdmin,
-        saveProduct,
-        deleteProduct,
-        saveScent,
-        deleteScent,
-        saveConfig,
-        resetToDefaults,
-        exportCatalogData,
-        importCatalogData,
+        products, scents, config, cart, cartCount, cartTotal, isCartOpen,
+        selectedProductForModal, isCheckoutOpen, isAdminLoggedIn, orders,
+        lastCompletedOrder, isSuccessModalOpen, isLoading,
+        addToCart, updateQuantity, removeFromCart, clearCart, setIsCartOpen,
+        openProductModal, closeProductModal, openCheckout, closeCheckout, closeSuccessModal,
+        submitOrder, generateWhatsAppLink, getWhatsAppSupportLink, updateOrderStatus, clearOrdersHistory,
+        loginAdmin, logoutAdmin, saveProduct, deleteProduct, saveScent, deleteScent, saveConfig,
+        resetToDefaults, exportCatalogData, importCatalogData, refreshCatalog,
       }}
     >
       {children}
@@ -532,8 +324,6 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
 export const useCatalog = () => {
   const context = useContext(CatalogContext);
-  if (!context) {
-    throw new Error("useCatalog deve ser usado dentro de um CatalogProvider");
-  }
+  if (!context) throw new Error("useCatalog deve ser usado dentro de um CatalogProvider");
   return context;
 };

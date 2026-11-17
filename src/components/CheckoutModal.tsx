@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState } from "react";
 import { X, Send, CreditCard, Banknote, QrCode, Lock, Sparkles, MessageCircle, AlertCircle } from "lucide-react";
@@ -15,10 +15,11 @@ export const CheckoutModal: React.FC = () => {
   const [isGift, setIsGift] = useState(false);
   const [giftMessage, setGiftMessage] = useState("");
   const [validationError, setValidationError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!isCheckoutOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!customerName.trim()) {
       setValidationError("Por favor, informe seu nome para identificarmos seu pedido.");
@@ -26,14 +27,19 @@ export const CheckoutModal: React.FC = () => {
     }
 
     setValidationError("");
-    submitOrder({
-      customerName: customerName.trim(),
-      customerPhone: customerPhone.trim(),
-      paymentMethod,
-      notes: notes.trim(),
-      isGift,
-      giftMessage: giftMessage.trim(),
-    });
+    setIsSubmitting(true);
+    try {
+      await submitOrder({
+        customerName: customerName.trim(),
+        customerPhone: customerPhone.trim(),
+        paymentMethod,
+        notes: notes.trim(),
+        isGift,
+        giftMessage: giftMessage.trim(),
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -252,10 +258,11 @@ export const CheckoutModal: React.FC = () => {
           {/* Submit Action */}
           <button
             type="submit"
-            className="w-full bg-[#25D366] hover:bg-[#1ebd59] text-white py-4 px-6 rounded-2xl font-medium text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-md hover:shadow-lg transition-all active:scale-98 cursor-pointer"
+            disabled={isSubmitting}
+            className="w-full bg-[#25D366] hover:bg-[#1ebd59] disabled:opacity-60 text-white py-4 px-6 rounded-2xl font-medium text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-md hover:shadow-lg transition-all active:scale-98 cursor-pointer"
           >
             <MessageCircle className="w-5 h-5 fill-white" />
-            <span>Enviar Pedido para o WhatsApp</span>
+            <span>{isSubmitting ? "Enviando pedido..." : "Enviar Pedido para o WhatsApp"}</span>
           </button>
         </form>
       </div>
