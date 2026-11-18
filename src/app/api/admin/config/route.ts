@@ -8,7 +8,13 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const supabase = getServiceSupabase();
-    const { error } = await supabase.from("store_config").upsert(toDbConfig(body));
+    const dbConfig = toDbConfig(body);
+    let { error } = await supabase.from("store_config").upsert(dbConfig);
+    if (error) {
+      // fallback: tenta insert em caso de falha de upsert (ex.: row inexistente)
+      const { error: insErr } = await supabase.from("store_config").insert(dbConfig);
+      error = insErr || null;
+    }
     if (error) throw error;
     return NextResponse.json({ ok: true });
   } catch (e: any) {

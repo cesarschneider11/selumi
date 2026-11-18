@@ -284,7 +284,7 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const saveConfig = async (newConfig: StoreConfig) => {
     setConfig(newConfig);
-    try { await api("/api/admin/config", { method: "POST", body: JSON.stringify(newConfig) }); } catch (e) { console.error(e); await refreshCatalog(); }
+    try { await api("/api/admin/config", { method: "POST", body: JSON.stringify(newConfig) }); } catch (e) { console.error(e); await refreshCatalog(); throw e; }
   };
 
   const resetToDefaults = async () => {

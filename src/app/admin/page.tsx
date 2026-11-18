@@ -256,8 +256,18 @@ export default function AdminPage() {
   // --- Handlers for Settings ---
   const handleSaveConfig = async (e: React.FormEvent) => {
     e.preventDefault();
-    await saveConfig(tempConfig);
-    showNotice("Configurações da loja atualizadas!");
+    try {
+      setIsSaving(true);
+      await saveConfig(tempConfig);
+      await refreshCatalog();
+      setTempConfig(config);
+      showNotice("Configurações da loja salvas com sucesso!");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "erro desconhecido";
+      showNotice(`Falha ao salvar: ${message}`);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // --- Handlers for Backup & Restore ---
