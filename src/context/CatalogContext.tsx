@@ -186,6 +186,14 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
     msg += `\n━━━━━━━━━━━━━━━━━━━━━\n`;
     msg += `💰 *VALOR TOTAL:* ${formatCurrency(orderData.total)}\n`;
     msg += `💳 *Forma de Pagamento:* ${paymentLabels[orderData.paymentMethod] || orderData.paymentMethod}\n`;
+    if (orderData.paymentMethod === "pix") {
+      const pixKey = config.pixKey?.trim();
+      const pixKeyType = config.pixKeyType?.trim();
+      if (pixKey) {
+        msg += `🔑 *Chave Pix (${pixKeyType || "chave"}):* ${pixKey}\n`;
+      }
+      msg += `📎 *Comprovante:* vou colar o comprovante do Pix logo abaixo desta mensagem.\n`;
+    }
     if (orderData.notes && orderData.notes.trim()) msg += `📝 *Observações / Detalhes:* ${orderData.notes.trim()}\n`;
     if (orderData.isGift) {
       msg += `🎁 *Embalagem para Presente:* Sim\n`;

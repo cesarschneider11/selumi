@@ -136,7 +136,7 @@ export const CheckoutModal: React.FC = () => {
                     <span>PIX</span>
                   </div>
                   <p className="text-[11px] text-[#6E5D53] mt-0.5 leading-snug">
-                    Chave e confirmação rápida pelo WhatsApp.
+                    Use a chave Pix da Selumi e envie o comprovante no WhatsApp.
                   </p>
                 </div>
               </label>
@@ -186,6 +186,23 @@ export const CheckoutModal: React.FC = () => {
                 </span>
               </div>
             </div>
+
+            {paymentMethod === "pix" && (
+              <div className="mt-3 p-4 rounded-2xl border border-[#B87333]/40 bg-[#FDF9F4]">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#B87333] mb-1.5">
+                  Chave Pix da Selumi
+                </p>
+                <p className="text-sm font-bold text-[#332219] break-all">
+                  {config.pixKey || "Chave Pix não configurada"}
+                </p>
+                {config.pixKeyType && (
+                  <p className="text-[11px] text-[#6E5D53] mt-0.5">Tipo: {config.pixKeyType}</p>
+                )}
+                <p className="text-[11px] text-[#6E5D53] mt-2 leading-snug">
+                  Após enviar o pedido no WhatsApp, faça o Pix com esta chave e cole o comprovante logo abaixo da mensagem.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Observations */}

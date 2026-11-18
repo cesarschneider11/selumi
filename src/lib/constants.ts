@@ -194,8 +194,8 @@ export const INITIAL_CONFIG: StoreConfig = {
   tagline: "Luz que acolhe",
   whatsappNumber: "5511999999999", // Editável livremente no Painel Admin
   welcomeMessage: "Olá! Gostaria de tirar uma dúvida sobre as velas da Selumi.",
-  pixKey: "selumi.velas@exemplo.com.br",
-  pixKeyType: "E-mail ou Chave Aleatória",
+  pixKey: "00787993921",
+  pixKeyType: "Chave Pix",
   isOpen: true,
   cityState: "Brasil",
   instagramUrl: "https://instagram.com",
