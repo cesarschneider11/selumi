@@ -4,11 +4,7 @@ import crypto from "crypto";
 const COOKIE_NAME = "selumi_admin_session";
 
 function getSecret() {
-  return (
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-    "selumi-dev-secret"
-  );
+  return process.env.ADMIN_SECRET || "selumi-admin-secret-v1";
 }
 
 function sign(value: string) {
