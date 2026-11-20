@@ -17,6 +17,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     category: "Coleção Escultural",
     available: true,
     featured: true,
+    isBestSeller: true,
   },
   {
     id: "prod-rosa",
@@ -33,7 +34,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     imageUrl: "/products/rosa.jpg",
     category: "Coleção Floral",
     available: true,
-    featured: true,
+    featured: false,
+    isBestSeller: false,
   },
   {
     id: "prod-flor",
@@ -51,6 +53,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     category: "Coleção Floral",
     available: true,
     featured: false,
+    isBestSeller: false,
   },
   {
     id: "prod-vidro-pequeno",
@@ -68,6 +71,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     category: "Linha Potes de Vidro",
     available: true,
     featured: false,
+    isBestSeller: false,
   },
   {
     id: "prod-vidro-grande",
@@ -85,6 +89,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     category: "Linha Potes de Vidro",
     available: true,
     featured: true,
+    isBestSeller: true,
   },
 ];
 
@@ -93,8 +98,9 @@ export const INITIAL_SCENTS: Scent[] = [
     id: "scent-vanilla-sugar",
     name: "Vanilla Sugar",
     description: "Um abraço doce e envolvente. A baunilha e o caramelo encontram a delicadeza do jasmim e o toque frutado da framboesa, criando uma atmosfera confortável e acolhedora. Combina com: quartos, salas aconchegantes, tardes tranquilas e momentos de descanso.",
-    tags: ["Adocicada", "Acolhedor", "Reconfortante"],
+    tags: ["+ Vendida", "Adocicada", "Acolhedor", "Reconfortante"],
     available: true,
+    isBestSeller: true,
   },
   {
     id: "scent-confort-baby",
@@ -102,13 +108,15 @@ export const INITIAL_SCENTS: Scent[] = [
     description: "Um perfume delicado que remete ao carinho e ao conforto de roupas recém-lavadas. Combina notas suaves de pera, maçã, rosa, jasmim e lírio-do-vale. Combina com: quartos, ambientes delicados, momentos de tranquilidade e presentes cheios de ternura.",
     tags: ["Infantil", "Suave", "Delicado"],
     available: true,
+    isBestSeller: false,
   },
   {
     id: "scent-la-bomba",
     name: "La Bomba",
     description: "Vibrante, marcante e sofisticada. A pitaya encontra a exuberância da peônia vermelha e do frangipani, enquanto a baunilha e o patchouli acrescentam profundidade. Combina com: salas elegantes, encontros especiais, noites de celebração e ambientes cheios de personalidade.",
-    tags: ["Oriental Floral", "Marcante", "Sofisticada"],
+    tags: ["+ Vendida", "Oriental Floral", "Marcante", "Sofisticada"],
     available: true,
+    isBestSeller: true,
   },
   {
     id: "scent-sakura-lovers",
@@ -116,6 +124,7 @@ export const INITIAL_SCENTS: Scent[] = [
     description: "Uma fragrância romântica que combina a suavidade das flores de cerejeira com frutas vermelhas e um fundo cremoso de baunilha. Notas de cereja, cassis, rosa, violeta, framboesa, sândalo e baunilha. Combina com: quartos, momentos românticos, presentes delicados e ambientes acolhedores.",
     tags: ["Floral Frutada", "Romântica", "Adocicada"],
     available: true,
+    isBestSeller: false,
   },
   {
     id: "scent-bamboo-trouss",
@@ -123,6 +132,7 @@ export const INITIAL_SCENTS: Scent[] = [
     description: "O frescor do limão e da bergamota encontra notas verdes, florais e aquáticas. Um perfume leve e revigorante que transmite a sensação de natureza e equilíbrio. Combina com: salas, escritórios, banheiros, espaços de meditação e ambientes minimalistas.",
     tags: ["Cítrica Herbal", "Aquática", "Revigorante"],
     available: true,
+    isBestSeller: false,
   },
   {
     id: "scent-white-jasmin",
@@ -130,13 +140,15 @@ export const INITIAL_SCENTS: Scent[] = [
     description: "Um buquê delicado de jasmim, frésia, rosa e lírio-do-vale, com uma abertura fresca de maçã e notas verdes. Elegante, suave e convidativo. Combina com: salas de estar, entradas da casa, momentos de recepção e ambientes sofisticados.",
     tags: ["Floral", "Elegante", "Fresco"],
     available: true,
+    isBestSeller: false,
   },
   {
     id: "scent-cereja-avela",
     name: "Cereja e Avelã",
     description: "Uma combinação irresistível de cereja, avelã e nuances de caramelo e baunilha. Doce, envolvente e cheia de personalidade. Combina com: salas aconchegantes, encontros a dois, noites especiais e dias mais frescos.",
-    tags: ["Adocicada", "Envolvente", "Marcante"],
+    tags: ["+ Vendida", "Adocicada", "Envolvente", "Marcante"],
     available: true,
+    isBestSeller: true,
   },
   {
     id: "scent-ginger-bread",
@@ -144,6 +156,7 @@ export const INITIAL_SCENTS: Scent[] = [
     description: "Um aroma que lembra biscoitos recém-assados, especiarias quentes e momentos especiais em família. Doce e acolhedor, com uma atmosfera de confeitaria artesanal. Combina com: cozinhas, salas, encontros familiares e celebrações de fim de ano.",
     tags: ["Gourmand Especiada", "Acolhedor", "Festivo"],
     available: true,
+    isBestSeller: false,
   },
   {
     id: "scent-cha-branco",
@@ -151,6 +164,7 @@ export const INITIAL_SCENTS: Scent[] = [
     description: "Uma fragrância discreta e refinada, inspirada na suavidade das folhas de chá. Ideal para quem aprecia ambientes perfumados com leveza e elegância. Combina com: escritórios, quartos, salas, ambientes minimalistas e momentos de leitura.",
     tags: ["Fresco", "Herbal", "Delicado"],
     available: true,
+    isBestSeller: false,
   },
   {
     id: "scent-flor-cerejeira",
@@ -158,6 +172,7 @@ export const INITIAL_SCENTS: Scent[] = [
     description: "Um perfume floral delicado que evoca a beleza da primavera, a serenidade e o romantismo das flores de cerejeira. Combina com: quartos, salas delicadas, momentos tranquilos e presentes românticos.",
     tags: ["Floral", "Romântica", "Serena"],
     available: true,
+    isBestSeller: false,
   },
   {
     id: "scent-pinho-siberiano",
@@ -165,6 +180,7 @@ export const INITIAL_SCENTS: Scent[] = [
     description: "Inspirada no frescor dos pinheiros e na atmosfera das florestas, é uma opção para quem aprecia perfumes verdes e a sensação de natureza dentro de casa. Combina com: salas, casas de campo, ambientes rústicos e decoração natalina.",
     tags: ["Verde", "Conífero", "Amadeirado"],
     available: true,
+    isBestSeller: false,
   },
   {
     id: "scent-caramelate",
@@ -172,6 +188,7 @@ export const INITIAL_SCENTS: Scent[] = [
     description: "O frescor das folhas verdes encontra a doçura suculenta do figo, envolvida por baunilha, sândalo e caramelo. Um perfume sofisticado e reconfortante. Combina com: salas de estar, encontros elegantes, noites aconchegantes e ambientes de personalidade.",
     tags: ["Frutado Gourmand", "Sofisticado", "Amadeirado"],
     available: true,
+    isBestSeller: false,
   },
   {
     id: "scent-peonia",
@@ -179,6 +196,7 @@ export const INITIAL_SCENTS: Scent[] = [
     description: "A delicadeza da peônia em flor se mistura à pera madura, ao pêssego aveludado e a um toque quente de âmbar. Um perfume suave, elegante e acolhedor. Combina com: quartos, salas sofisticadas, momentos de autocuidado e presentes especiais.",
     tags: ["Floral Frutado", "Elegante", "Suave"],
     available: true,
+    isBestSeller: false,
   },
   {
     id: "scent-champagne-toast",
@@ -186,6 +204,7 @@ export const INITIAL_SCENTS: Scent[] = [
     description: "Uma fragrância alegre e sofisticada, com notas cítricas e frutadas, suavizadas pelo toque doce da baunilha. Um verdadeiro convite para celebrar. Combina com: encontros especiais, aniversários, momentos românticos, comemorações e presentes.",
     tags: ["Frutado Cítrico", "Adocicado", "Festivo"],
     available: true,
+    isBestSeller: false,
   },
 ];
 

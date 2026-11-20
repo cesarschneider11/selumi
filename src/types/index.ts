@@ -9,6 +9,7 @@ export interface Product {
   category: string;
   available: boolean;
   featured?: boolean;
+  isBestSeller?: boolean;
 }
 
 export interface Scent {
@@ -17,6 +18,7 @@ export interface Scent {
   description: string;
   tags?: string[];
   available: boolean;
+  isBestSeller?: boolean;
 }
 
 export interface CartItem {

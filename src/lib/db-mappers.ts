@@ -1,4 +1,4 @@
-﻿import { Product, Scent, StoreConfig, OrderData } from "@/types";
+import { Product, Scent, StoreConfig, OrderData } from "@/types";
 
 export type DbConfig = {
   id: number;
@@ -79,6 +79,7 @@ export function toDbConfig(c: StoreConfig): Omit<DbConfig, "id"> & { id: number 
 }
 
 export function fromDbProduct(r: DbProduct): Product {
+  const isBest = Boolean(r.featured);
   return {
     id: r.id,
     name: r.name,
@@ -89,11 +90,13 @@ export function fromDbProduct(r: DbProduct): Product {
     imageUrl: r.image_url ?? "",
     category: r.category ?? "",
     available: r.available,
-    featured: r.featured ?? false,
+    featured: isBest,
+    isBestSeller: isBest,
   };
 }
 
 export function toDbProduct(p: Product, sortOrder = 0): DbProduct {
+  const isBest = p.isBestSeller !== undefined ? Boolean(p.isBestSeller) : Boolean(p.featured);
   return {
     id: p.id,
     name: p.name,
@@ -104,27 +107,35 @@ export function toDbProduct(p: Product, sortOrder = 0): DbProduct {
     image_url: p.imageUrl ?? null,
     category: p.category ?? null,
     available: p.available,
-    featured: p.featured ?? false,
+    featured: isBest,
     sort_order: sortOrder,
   };
 }
 
 export function fromDbScent(r: DbScent): Scent {
+  const tags = Array.isArray(r.tags) ? r.tags : [];
+  const isBest = tags.some((t) => typeof t === "string" && (t.toLowerCase() === "mais vendida" || t.toLowerCase() === "+ vendida"));
   return {
     id: r.id,
     name: r.name,
     description: r.description ?? "",
-    tags: Array.isArray(r.tags) ? r.tags : [],
+    tags,
     available: r.available,
+    isBestSeller: isBest,
   };
 }
 
 export function toDbScent(s: Scent): DbScent {
+  const currentTags = Array.isArray(s.tags) ? [...s.tags] : [];
+  const filteredTags = currentTags.filter((t) => typeof t === "string" && t.toLowerCase() !== "mais vendida" && t.toLowerCase() !== "+ vendida");
+  if (s.isBestSeller) {
+    filteredTags.unshift("+ Vendida");
+  }
   return {
     id: s.id,
     name: s.name,
     description: s.description ?? null,
-    tags: s.tags ?? [],
+    tags: filteredTags,
     available: s.available,
   };
 }

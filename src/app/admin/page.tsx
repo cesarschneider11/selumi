@@ -25,6 +25,8 @@ import {
   Globe,
   Image as ImageIcon,
   Loader2,
+  AlertCircle,
+  Star,
 } from "lucide-react";
 import { useCatalog } from "@/context/CatalogContext";
 import { Product, Scent, StoreConfig, OrderStatus } from "@/types";
@@ -188,13 +190,27 @@ export default function AdminPage() {
       category: "Coleção Floral",
       available: true,
       featured: false,
+      isBestSeller: false,
     });
     setIsProductModalOpen(true);
   };
 
   const handleEditProduct = (prod: Product) => {
-    setEditingProduct({ ...prod });
+    setEditingProduct({ ...prod, isBestSeller: Boolean(prod.isBestSeller || prod.featured) });
     setIsProductModalOpen(true);
+  };
+
+  const handleToggleProductStock = async (prod: Product) => {
+    const updated: Product = { ...prod, available: !prod.available };
+    await saveProduct(updated);
+    showNotice(`Vela "${prod.name}" marcada como ${updated.available ? "Em Estoque" : "Em Falta"}!`);
+  };
+
+  const handleToggleProductBestSeller = async (prod: Product) => {
+    const isNowBest = !(prod.isBestSeller || prod.featured);
+    const updated: Product = { ...prod, isBestSeller: isNowBest, featured: isNowBest };
+    await saveProduct(updated);
+    showNotice(`Vela "${prod.name}" ${isNowBest ? "marcada como + Vendida!" : "removida de + Vendida."}`);
   };
 
   const handleSaveProductSubmit = async (e: React.FormEvent) => {
@@ -236,6 +252,7 @@ export default function AdminPage() {
       description: "",
       tags: ["Aconchegante"],
       available: true,
+      isBestSeller: false,
     });
     setIsScentModalOpen(true);
   };
@@ -243,6 +260,19 @@ export default function AdminPage() {
   const handleEditScent = (scent: Scent) => {
     setEditingScent({ ...scent });
     setIsScentModalOpen(true);
+  };
+
+  const handleToggleScentStock = async (scent: Scent) => {
+    const updated: Scent = { ...scent, available: !scent.available };
+    await saveScent(updated);
+    showNotice(`Essência "${scent.name}" marcada como ${updated.available ? "Disponível" : "Em Falta"}!`);
+  };
+
+  const handleToggleScentBestSeller = async (scent: Scent) => {
+    const isNowBest = !scent.isBestSeller;
+    const updated: Scent = { ...scent, isBestSeller: isNowBest };
+    await saveScent(updated);
+    showNotice(`Essência "${scent.name}" ${isNowBest ? "marcada como + Vendida!" : "removida de + Vendida."}`);
   };
 
   const handleSaveScentSubmit = async (e: React.FormEvent) => {
@@ -448,78 +478,130 @@ export default function AdminPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {products.map((product) => (
-                <div
-                  key={product.id}
-                  className="bg-white rounded-2xl border border-[#E8DCCF] overflow-hidden flex flex-col justify-between shadow-2xs hover:shadow-md transition-shadow"
-                >
-                  <div className="relative aspect-video bg-[#F4ECE1] overflow-hidden">
-                    <img
-                      src={product.imageUrl}
-                      alt={product.name}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute top-2.5 left-2.5">
-                      <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md bg-white/90 text-[#332219]">
-                        {product.category}
-                      </span>
-                    </div>
-                    <div className="absolute top-2.5 right-2.5">
-                      <span
-                        className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                          product.available
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
-                      >
-                        {product.available ? "Em Estoque" : "Esgotada"}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="p-4 flex-1 flex flex-col justify-between">
-                    <div>
-                      <div className="flex items-baseline justify-between gap-2 mb-1">
-                        <h3 className="font-serif text-xl font-semibold text-[#332219]">
-                          {product.name}
-                        </h3>
-                        <span className="text-base font-bold text-[#B87333]">
-                          {product.price.toLocaleString("pt-BR", {
-                            style: "currency",
-                            currency: "BRL",
-                          })}
+              {products.map((product) => {
+                const isBest = Boolean(product.isBestSeller || product.featured);
+                return (
+                  <div
+                    key={product.id}
+                    className="bg-white rounded-2xl border border-[#E8DCCF] overflow-hidden flex flex-col justify-between shadow-2xs hover:shadow-md transition-shadow"
+                  >
+                    <div className="relative aspect-video bg-[#F4ECE1] overflow-hidden">
+                      <img
+                        src={product.imageUrl}
+                        alt={product.name}
+                        className={`w-full h-full object-cover ${!product.available ? "grayscale-30 opacity-75" : ""}`}
+                      />
+                      <div className="absolute top-2.5 left-2.5">
+                        <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md bg-white/90 text-[#332219]">
+                          {product.category}
                         </span>
                       </div>
-                      <p className="text-xs text-[#6E5D53] line-clamp-2 mb-3">
-                        {product.description}
-                      </p>
+                      <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5">
+                        {isBest && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gradient-to-r from-[#B87333] to-[#9E5F28] text-white shadow-xs flex items-center gap-1">
+                            <Flame className="w-2.5 h-2.5 fill-amber-200 text-amber-200" />
+                            <span>+ Vendida</span>
+                          </span>
+                        )}
+                        <span
+                          className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shadow-2xs ${
+                            product.available
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-600 text-white"
+                          }`}
+                        >
+                          {product.available ? "Em Estoque" : "Em Falta"}
+                        </span>
+                      </div>
                     </div>
 
-                    <div className="flex items-center gap-2 pt-3 border-t border-[#F4ECE1]">
-                      <button
-                        onClick={() => handleEditProduct(product)}
-                        className="flex-1 py-2 px-3 rounded-lg bg-[#FAF7F2] hover:bg-[#F4ECE1] text-[#332219] text-xs font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                      >
-                        <Pencil className="w-3.5 h-3.5" />
-                        <span>Editar</span>
-                      </button>
+                    <div className="p-4 flex-1 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-baseline justify-between gap-2 mb-1">
+                          <h3 className="font-serif text-xl font-semibold text-[#332219]">
+                            {product.name}
+                          </h3>
+                          <span className="text-base font-bold text-[#B87333]">
+                            {product.price.toLocaleString("pt-BR", {
+                              style: "currency",
+                              currency: "BRL",
+                            })}
+                          </span>
+                        </div>
+                        <p className="text-xs text-[#6E5D53] line-clamp-2 mb-3">
+                          {product.description}
+                        </p>
+                      </div>
 
-                      <button
-                        onClick={async () => {
-                          if (window.confirm(`Deseja realmente excluir a vela "${product.name}"?`)) {
-                            await deleteProduct(product.id);
-                            showNotice(`Vela "${product.name}" removida.`);
-                          }
-                        }}
-                        className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
-                        title="Excluir produto"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <div>
+                        {/* Ações Rápidas de 1 Clique */}
+                        <div className="grid grid-cols-2 gap-2 mb-2.5 pt-2.5 border-t border-[#F4ECE1]">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleProductStock(product)}
+                            className={`py-1.5 px-2 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 transition-all cursor-pointer border ${
+                              product.available
+                                ? "bg-green-50 text-green-800 border-green-200 hover:bg-red-50 hover:text-red-700 hover:border-red-200"
+                                : "bg-red-50 text-red-700 border-red-200 hover:bg-green-50 hover:text-green-700 hover:border-green-200"
+                            }`}
+                            title={product.available ? "Clique para marcar como Em Falta" : "Clique para marcar como Em Estoque"}
+                          >
+                            {product.available ? (
+                              <>
+                                <Check className="w-3 h-3 text-green-600" />
+                                <span>Em Estoque</span>
+                              </>
+                            ) : (
+                              <>
+                                <AlertCircle className="w-3 h-3 text-red-600" />
+                                <span>Em Falta</span>
+                              </>
+                            )}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleToggleProductBestSeller(product)}
+                            className={`py-1.5 px-2 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 transition-all cursor-pointer border ${
+                              isBest
+                                ? "bg-amber-100 text-[#9E5F28] border-amber-300 shadow-2xs hover:bg-amber-200"
+                                : "bg-[#FAF7F2] text-[#6E5D53] border-[#E8DCCF] hover:bg-[#F4ECE1] hover:text-[#332219]"
+                            }`}
+                            title="Clique para alternar o selo de Mais Vendida no site"
+                          >
+                            <Flame className={`w-3 h-3 ${isBest ? "fill-amber-500 text-amber-500" : ""}`} />
+                            <span>{isBest ? "+ Vendida ✓" : "+ Vendida"}</span>
+                          </button>
+                        </div>
+
+                        {/* Botões de Edição e Exclusão */}
+                        <div className="flex items-center gap-2 pt-2 border-t border-[#F4ECE1]">
+                          <button
+                            onClick={() => handleEditProduct(product)}
+                            className="flex-1 py-2 px-3 rounded-xl bg-[#FAF7F2] hover:bg-[#F4ECE1] text-[#332219] text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-[#E8DCCF]/60"
+                          >
+                            <Pencil className="w-3.5 h-3.5 text-[#B87333]" />
+                            <span>Editar Detalhes</span>
+                          </button>
+
+                          <button
+                            onClick={async () => {
+                              if (window.confirm(`Deseja realmente excluir a vela "${product.name}"?`)) {
+                                await deleteProduct(product.id);
+                                showNotice(`Vela "${product.name}" removida.`);
+                              }
+                            }}
+                            className="p-2 rounded-xl text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                            title="Excluir produto"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -673,58 +755,118 @@ export default function AdminPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {scents.map((scent) => (
-                <div
-                  key={scent.id}
-                  className="bg-white rounded-2xl p-5 border border-[#E8DCCF] flex flex-col justify-between shadow-2xs"
-                >
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[10px] uppercase font-bold text-[#9E5F28] bg-[#F4ECE1] px-2 py-0.5 rounded-md">
-                        {scent.tags?.[0] || "Aroma"}
-                      </span>
-                      <span
-                        className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                          scent.available ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"
-                        }`}
-                      >
-                        {scent.available ? "Ativa" : "Inativa"}
-                      </span>
+              {scents.map((scent) => {
+                const isBest = Boolean(scent.isBestSeller);
+                const tagLabel = scent.tags?.find((t) => t.toLowerCase() !== "+ vendida" && t.toLowerCase() !== "mais vendida") || scent.tags?.[0] || "Aroma";
+
+                return (
+                  <div
+                    key={scent.id}
+                    className={`bg-white rounded-2xl p-5 border flex flex-col justify-between shadow-2xs transition-all ${
+                      !scent.available ? "border-red-200/80 bg-red-50/20" : "border-[#E8DCCF]"
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between gap-1 mb-2">
+                        <span className="text-[10px] uppercase font-bold text-[#9E5F28] bg-[#F4ECE1] px-2 py-0.5 rounded-md truncate max-w-[140px]">
+                          {tagLabel}
+                        </span>
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          {isBest && (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gradient-to-r from-[#B87333] to-[#9E5F28] text-white shadow-2xs flex items-center gap-1">
+                              <Flame className="w-2.5 h-2.5 fill-amber-200 text-amber-200" />
+                              <span>+ Vendida</span>
+                            </span>
+                          )}
+                          <span
+                            className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                              scent.available
+                                ? "bg-green-100 text-green-700"
+                                : "bg-red-600 text-white"
+                            }`}
+                          >
+                            {scent.available ? "Disponível" : "Em Falta"}
+                          </span>
+                        </div>
+                      </div>
+
+                      <h3 className={`font-serif text-lg font-semibold mb-1 ${!scent.available ? "text-gray-600 line-through" : "text-[#332219]"}`}>
+                        {scent.name}
+                      </h3>
+
+                      <p className={`text-xs leading-relaxed mb-4 ${!scent.available ? "text-gray-400" : "text-[#6E5D53]"}`}>
+                        {scent.description}
+                      </p>
                     </div>
 
-                    <h3 className="font-serif text-lg font-semibold text-[#332219] mb-1">
-                      {scent.name}
-                    </h3>
+                    <div>
+                      {/* Ações Rápidas de 1 Clique para Essência */}
+                      <div className="grid grid-cols-2 gap-2 mb-2 pt-2 border-t border-[#F4ECE1]">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleScentStock(scent)}
+                          className={`py-1.5 px-2 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 transition-all cursor-pointer border ${
+                            scent.available
+                              ? "bg-green-50 text-green-800 border-green-200 hover:bg-red-50 hover:text-red-700 hover:border-red-200"
+                              : "bg-red-50 text-red-700 border-red-200 hover:bg-green-50 hover:text-green-700 hover:border-green-200"
+                          }`}
+                          title={scent.available ? "Clique para marcar como Em Falta" : "Clique para marcar como Disponível"}
+                        >
+                          {scent.available ? (
+                            <>
+                              <Check className="w-3 h-3 text-green-600" />
+                              <span>Disponível</span>
+                            </>
+                          ) : (
+                            <>
+                              <AlertCircle className="w-3 h-3 text-red-600" />
+                              <span>Em Falta</span>
+                            </>
+                          )}
+                        </button>
 
-                    <p className="text-xs text-[#6E5D53] leading-relaxed mb-4">
-                      {scent.description}
-                    </p>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleScentBestSeller(scent)}
+                          className={`py-1.5 px-2 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 transition-all cursor-pointer border ${
+                            isBest
+                              ? "bg-amber-100 text-[#9E5F28] border-amber-300 shadow-2xs hover:bg-amber-200"
+                              : "bg-[#FAF7F2] text-[#6E5D53] border-[#E8DCCF] hover:bg-[#F4ECE1] hover:text-[#332219]"
+                          }`}
+                          title="Clique para alternar o selo de Mais Vendida no site"
+                        >
+                          <Flame className={`w-3 h-3 ${isBest ? "fill-amber-500 text-amber-500" : ""}`} />
+                          <span>{isBest ? "+ Vendida ✓" : "+ Vendida"}</span>
+                        </button>
+                      </div>
+
+                      {/* Botões Editar / Excluir */}
+                      <div className="flex items-center gap-2 pt-2 border-t border-[#F4ECE1]">
+                        <button
+                          onClick={() => handleEditScent(scent)}
+                          className="flex-1 py-1.5 px-3 rounded-lg bg-[#FAF7F2] hover:bg-[#F4ECE1] text-[#332219] text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-[#E8DCCF]/60"
+                        >
+                          <Pencil className="w-3.5 h-3.5 text-[#B87333]" />
+                          <span>Editar</span>
+                        </button>
+
+                        <button
+                          onClick={async () => {
+                            if (window.confirm(`Deseja excluir a essência "${scent.name}"?`)) {
+                              await deleteScent(scent.id);
+                              showNotice(`Essência "${scent.name}" removida.`);
+                            }
+                          }}
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                          title="Excluir essência"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
                   </div>
-
-                  <div className="flex items-center gap-2 pt-3 border-t border-[#F4ECE1]">
-                    <button
-                      onClick={() => handleEditScent(scent)}
-                      className="flex-1 py-1.5 px-3 rounded-lg bg-[#FAF7F2] hover:bg-[#F4ECE1] text-[#332219] text-xs font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                    >
-                      <Pencil className="w-3.5 h-3.5" />
-                      <span>Editar</span>
-                    </button>
-
-                      <button
-                        onClick={async () => {
-                          if (window.confirm(`Deseja excluir a essência "${scent.name}"?`)) {
-                            await deleteScent(scent.id);
-                            showNotice(`Essência "${scent.name}" removida.`);
-                          }
-                        }}
-                      className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
-                      title="Excluir essência"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -1114,20 +1256,42 @@ export default function AdminPage() {
                 />
               </div>
 
-              {/* Stock Switch */}
-              <div className="flex items-center gap-3 py-2">
-                <input
-                  type="checkbox"
-                  id="prod-available"
-                  checked={editingProduct.available}
-                  onChange={(e) =>
-                    setEditingProduct({ ...editingProduct, available: e.target.checked })
-                  }
-                  className="w-4 h-4 rounded text-[#B87333] focus:ring-[#B87333]"
-                />
-                <label htmlFor="prod-available" className="text-xs font-semibold text-[#332219] cursor-pointer">
-                  Produto Disponível para Pedidos (em estoque)
-                </label>
+              {/* Stock Switch & Best Seller Switch */}
+              <div className="space-y-3 p-3.5 bg-[#FAF7F2] rounded-2xl border border-[#E8DCCF]">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="prod-available"
+                    checked={editingProduct.available}
+                    onChange={(e) =>
+                      setEditingProduct({ ...editingProduct, available: e.target.checked })
+                    }
+                    className="w-4 h-4 rounded text-[#B87333] focus:ring-[#B87333] cursor-pointer"
+                  />
+                  <label htmlFor="prod-available" className="text-xs font-semibold text-[#332219] cursor-pointer select-none">
+                    Vela Disponível para Pedidos (desmarque se estiver &ldquo;Em Falta&rdquo;)
+                  </label>
+                </div>
+
+                <div className="flex items-center gap-3 pt-2.5 border-t border-[#E8DCCF]/60">
+                  <input
+                    type="checkbox"
+                    id="prod-bestseller"
+                    checked={Boolean(editingProduct.isBestSeller || editingProduct.featured)}
+                    onChange={(e) =>
+                      setEditingProduct({
+                        ...editingProduct,
+                        isBestSeller: e.target.checked,
+                        featured: e.target.checked,
+                      })
+                    }
+                    className="w-4 h-4 rounded text-[#B87333] focus:ring-[#B87333] cursor-pointer"
+                  />
+                  <label htmlFor="prod-bestseller" className="text-xs font-semibold text-[#332219] cursor-pointer flex items-center gap-1.5 select-none">
+                    <Flame className="w-3.5 h-3.5 text-[#B87333] fill-amber-500" />
+                    <span>Destaque: Marcar como &ldquo;+ Vendida&rdquo; (Selo chamativo no catálogo)</span>
+                  </label>
+                </div>
               </div>
 
               <div className="pt-4 border-t border-[#F4ECE1] flex justify-end gap-3">
@@ -1204,20 +1368,38 @@ export default function AdminPage() {
                 />
               </div>
 
-              {/* Status */}
-              <div className="flex items-center gap-3 py-2">
-                <input
-                  type="checkbox"
-                  id="scent-available"
-                  checked={editingScent.available}
-                  onChange={(e) =>
-                    setEditingScent({ ...editingScent, available: e.target.checked })
-                  }
-                  className="w-4 h-4 rounded text-[#B87333] focus:ring-[#B87333]"
-                />
-                <label htmlFor="scent-available" className="text-xs font-semibold text-[#332219] cursor-pointer">
-                  Essência Ativa para Escolha do Cliente
-                </label>
+              {/* Status & Best Seller Switch */}
+              <div className="space-y-3 p-3.5 bg-[#FAF7F2] rounded-2xl border border-[#E8DCCF]">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="scent-available"
+                    checked={editingScent.available}
+                    onChange={(e) =>
+                      setEditingScent({ ...editingScent, available: e.target.checked })
+                    }
+                    className="w-4 h-4 rounded text-[#B87333] focus:ring-[#B87333] cursor-pointer"
+                  />
+                  <label htmlFor="scent-available" className="text-xs font-semibold text-[#332219] cursor-pointer select-none">
+                    Essência Disponível para Escolha (desmarque se estiver &ldquo;Em Falta&rdquo;)
+                  </label>
+                </div>
+
+                <div className="flex items-center gap-3 pt-2.5 border-t border-[#E8DCCF]/60">
+                  <input
+                    type="checkbox"
+                    id="scent-bestseller"
+                    checked={Boolean(editingScent.isBestSeller)}
+                    onChange={(e) =>
+                      setEditingScent({ ...editingScent, isBestSeller: e.target.checked })
+                    }
+                    className="w-4 h-4 rounded text-[#B87333] focus:ring-[#B87333] cursor-pointer"
+                  />
+                  <label htmlFor="scent-bestseller" className="text-xs font-semibold text-[#332219] cursor-pointer flex items-center gap-1.5 select-none">
+                    <Flame className="w-3.5 h-3.5 text-[#B87333] fill-amber-500" />
+                    <span>Destaque: Marcar como &ldquo;+ Vendida&rdquo; (Queridinha no mostruário)</span>
+                  </label>
+                </div>
               </div>
 
               <div className="pt-4 border-t border-[#F4ECE1] flex justify-end gap-3">
