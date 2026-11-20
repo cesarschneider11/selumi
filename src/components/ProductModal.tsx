@@ -12,13 +12,27 @@ export const ProductModal: React.FC = () => {
   const [addedSuccess, setAddedSuccess] = useState(false);
   const [showFullPhoto, setShowFullPhoto] = useState(false);
 
+  // Essências mais vendidas e disponíveis primeiro
+  const sortedScents = [...scents].sort((a, b) => {
+    const aBest = Boolean(a.isBestSeller);
+    const bBest = Boolean(b.isBestSeller);
+
+    if (aBest && !bBest) return -1;
+    if (!aBest && bBest) return 1;
+
+    if (a.available && !b.available) return -1;
+    if (!a.available && b.available) return 1;
+
+    return 0;
+  });
+
   // Set default available scent when modal opens
   useEffect(() => {
     if (selectedProductForModal) {
       setQuantity(1);
       setAddedSuccess(false);
       setShowFullPhoto(false);
-      const firstAvailable = scents.find((s) => s.available) || scents[0] || null;
+      const firstAvailable = sortedScents.find((s) => s.available) || sortedScents[0] || null;
       setSelectedScent(firstAvailable);
     }
   }, [selectedProductForModal, scents]);
@@ -237,7 +251,7 @@ export const ProductModal: React.FC = () => {
 
               {/* Scent Cards List */}
               <div className="space-y-2">
-                {scents.map((scent) => {
+                {sortedScents.map((scent) => {
                   const isSelected = selectedScent?.id === scent.id;
                   const isScentBestSeller = Boolean(scent.isBestSeller);
                   return (

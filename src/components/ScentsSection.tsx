@@ -7,6 +7,20 @@ import { useCatalog } from "@/context/CatalogContext";
 export const ScentsSection: React.FC = () => {
   const { scents } = useCatalog();
 
+  // Essências mais vendidas aparecem primeiro
+  const sortedScents = [...scents].sort((a, b) => {
+    const aBest = Boolean(a.isBestSeller);
+    const bBest = Boolean(b.isBestSeller);
+
+    if (aBest && !bBest) return -1;
+    if (!aBest && bBest) return 1;
+
+    if (a.available && !b.available) return -1;
+    if (!a.available && b.available) return 1;
+
+    return 0;
+  });
+
   return (
     <section id="essencias" className="py-16 md:py-24 bg-[#FAF7F2]">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
@@ -25,7 +39,7 @@ export const ScentsSection: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {scents.map((scent) => {
+          {sortedScents.map((scent) => {
             const isBest = Boolean(scent.isBestSeller);
             const isAvailable = scent.available;
             const categoryTag = scent.tags?.find((t) => t.toLowerCase() !== "+ vendida" && t.toLowerCase() !== "mais vendida") || scent.tags?.[0];

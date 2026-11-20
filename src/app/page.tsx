@@ -30,6 +30,22 @@ export default function HomePage() {
       ? products
       : products.filter((p) => p.category === selectedCategory);
 
+  // Produtos mais vendidos aparecem primeiro na ordem de visualização
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
+    const aBest = Boolean(a.isBestSeller || a.featured);
+    const bBest = Boolean(b.isBestSeller || b.featured);
+
+    // 1º: Mais vendidos vêm antes
+    if (aBest && !bBest) return -1;
+    if (!aBest && bBest) return 1;
+
+    // 2º: Em estoque vem antes de em falta
+    if (a.available && !b.available) return -1;
+    if (!a.available && b.available) return 1;
+
+    return 0;
+  });
+
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF7F2]">
       {/* Navigation Header */}
@@ -76,13 +92,13 @@ export default function HomePage() {
           </div>
 
           {/* Products Grid */}
-          {filteredProducts.length === 0 ? (
+          {sortedProducts.length === 0 ? (
             <div className="bg-white rounded-3xl p-12 text-center border border-[#E8DCCF]">
               <p className="text-sm text-[#6E5D53]">Nenhuma vela encontrada nesta categoria.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-              {filteredProducts.map((product) => (
+              {sortedProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
